@@ -24,9 +24,10 @@ import WearableAnalytics from "@/pages/WearableAnalytics";
 import Community from "@/pages/Community";
 import PhysicianDashboard from "@/pages/PhysicianDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
-import Login from "./pages/Login";
 import AddDoctor from "./pages/Doctor/AddDoctor";
 import DoctorList from "./pages/Doctor/DoctorList";
+import LoginPage from "./pages/Login";
+import DoctorSchedulePage from "./pages/doctorSchedule";
 
 function AuthenticatedLayout() {
   const { user } = useAuth();
@@ -60,7 +61,6 @@ function AuthenticatedLayout() {
               <Route path="/chat" component={Chat} />
               <Route path="/profile" component={Profile} />
               <Route path="/physician" component={PhysicianDashboard} />
-              <Route path="/api/login" component={Login} />
               <Route path="/admin">
                 {() => (
                   <ErrorBoundary>
@@ -121,6 +121,8 @@ function AuthLayout() {
                 )}
               </Route>
               <Route component={NotFound} />
+
+              <Route path="/api/login" component={LoginPage} />
             </Switch>
           </main>
         </div>
@@ -133,6 +135,8 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   const [location] = useLocation();
+  usePageTracking();
+
   // usePageTracking();
   if (isLoading) {
     return (
@@ -148,15 +152,26 @@ function Router() {
   if (!isAuthenticated) {
     // return location !== "/" ? <AuthLayout /> : <Landing />;
     switch (location) {
-        
+      case '/api/login':
+        return <LoginPage />;        
       case "/doctors/add":
         return <AddDoctor />;
       case "/doctors":
         return <DoctorList />;
+      case '/api/doctor-schedule':
+        return <DoctorSchedulePage />;
       default:
-        return <AuthLayout />;
+        return <Landing />;
+    // switch (location) {
+    //   case '/api/login':
+    //     return <LoginPage />;
+    //   case '/api/doctor-schedule':
+    //     return <DoctorSchedulePage />;
+    //   default:
+    //     return <Landing />;
     }
   }
+
 
   return <AuthenticatedLayout />;
 }
