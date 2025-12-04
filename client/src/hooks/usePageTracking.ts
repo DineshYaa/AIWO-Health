@@ -1,16 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
+import { navigate } from 'wouter/use-browser-location';
 
 export function usePageTracking() {
   const [location] = useLocation();
+  console.log(location);
   const lastTrackedPath = useRef<string | null>(null);
+
+
+
 
   useEffect(() => {
     if (location === lastTrackedPath.current) return;
-    
+
     lastTrackedPath.current = location;
-    
+
     const trackPageView = async () => {
       try {
         await apiRequest('POST', '/api/analytics/track', {
@@ -26,6 +31,7 @@ export function usePageTracking() {
     };
 
     trackPageView();
+
   }, [location]);
 }
 

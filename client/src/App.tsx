@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,10 +24,12 @@ import WearableAnalytics from "@/pages/WearableAnalytics";
 import Community from "@/pages/Community";
 import PhysicianDashboard from "@/pages/PhysicianDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
+import LoginPage from "./pages/Login";
+import DoctorSchedulePage from "./pages/doctorSchedule";
 
 function AuthenticatedLayout() {
   const { user } = useAuth();
-  
+
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "4rem",
@@ -65,6 +67,8 @@ function AuthenticatedLayout() {
                 )}
               </Route>
               <Route component={NotFound} />
+
+              <Route path="/api/login" component={LoginPage} />
             </Switch>
           </main>
         </div>
@@ -75,7 +79,8 @@ function AuthenticatedLayout() {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
+  const [location] = useLocation();
   usePageTracking();
 
   if (isLoading) {
@@ -90,8 +95,16 @@ function Router() {
   }
 
   if (!isAuthenticated) {
-    return <Landing />;
+    switch (location) {
+      case '/api/login':
+        return <LoginPage />;
+      case '/api/doctor-schedule':
+        return <DoctorSchedulePage />;
+      default:
+        return <Landing />;
+    }
   }
+
 
   return <AuthenticatedLayout />;
 }

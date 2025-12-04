@@ -73,6 +73,7 @@ const steps = [
 ];
 
 export default function Landing() {
+
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -109,7 +110,7 @@ export default function Landing() {
       </header>
 
       <section className="relative min-h-[85vh] flex items-center justify-center pt-16">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: "url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920')",
@@ -125,7 +126,7 @@ export default function Landing() {
             <span className="text-primary-foreground/90">Extend Your Life.</span>
           </h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Experience precision health optimization through advanced biomarker science, 
+            Experience precision health optimization through advanced biomarker science,
             AI-powered protocols, and luxury wellness retreats across the world's finest destinations.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -182,7 +183,7 @@ export default function Landing() {
             <Badge className="mb-4" variant="secondary">Our Programs</Badge>
             <h2 className="text-4xl font-semibold mb-4">Tailored Wellness Experiences</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the program that fits your schedule and health goals. 
+              Choose the program that fits your schedule and health goals.
               Each includes comprehensive biomarker analysis and personalized protocols.
             </p>
           </div>
@@ -287,7 +288,7 @@ export default function Landing() {
             Ready to Transform Your Health?
           </h2>
           <p className="text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join thousands who have optimized their health and extended their lifespan 
+            Join thousands who have optimized their health and extended their lifespan
             through precision medicine and personalized protocols.
           </p>
           <a href="/api/login" data-testid="button-final-cta">
