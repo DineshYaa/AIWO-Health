@@ -7,10 +7,10 @@ export function usePageTracking() {
   const lastTrackedPath = useRef<string | null>(null);
 
   useEffect(() => {
-    if (location === lastTrackedPath.current) return;
+    if (location == lastTrackedPath.current) return;
     
     lastTrackedPath.current = location;
-    
+
     const trackPageView = async () => {
       try {
         await apiRequest('POST', '/api/analytics/track', {
