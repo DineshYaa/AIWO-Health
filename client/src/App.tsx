@@ -28,6 +28,10 @@ import AddDoctor from "./pages/Doctor/AddDoctor";
 import DoctorList from "./pages/Doctor/DoctorList";
 import ViewDoctor from "./pages/Doctor/ViewDoctor";
 import LoginPage from "./pages/Login";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import RolesPage from "./pages/Roles";
+import RolesListPage from "./pages/roles/RolesList";
+import AddRolePage from "./pages/roles/AddRole";
 import DoctorSchedulePage from "./pages/doctorSchedule";
 
 function AuthenticatedLayout() {
@@ -61,6 +65,9 @@ function AuthenticatedLayout() {
               <Route path="/community" component={Community} />
               <Route path="/chat" component={Chat} />
               <Route path="/profile" component={Profile} />
+              <Route path="/roles" component={RolesListPage} />
+              <Route path="/roles/add" component={AddRolePage} />
+              <Route path="/roles/edit/:id" component={AddRolePage} />
               <Route path="/physician" component={PhysicianDashboard} />
               <Route path="/doctors" component={DoctorList} />
 
@@ -112,12 +119,20 @@ function Router() {
     switch (location) {
       case "/api/login":
         return <LoginPage />;
+<<<<<<< HEAD
+      case '/forgot-password':
+        return <ForgotPasswordPage />;
+      case '/api/doctor-schedule':
+=======
       case "/doctors/add":
         return <AddDoctor />;
       case "/doctors":
         return <DoctorList />;
       case "/api/doctor-schedule":
+>>>>>>> 85a538687f8995f8c39a11377c859c99e96ec326
         return <DoctorSchedulePage />;
+      case '/roles':
+        return <RolesListPage />;
       default:
         return <Landing />;
       // switch (location) {
