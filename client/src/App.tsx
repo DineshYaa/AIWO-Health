@@ -24,15 +24,16 @@ import WearableAnalytics from "@/pages/WearableAnalytics";
 import Community from "@/pages/Community";
 import PhysicianDashboard from "@/pages/PhysicianDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
-import AddDoctor from "./pages/Doctor/AddDoctor";
-import DoctorList from "./pages/Doctor/DoctorList";
-import ViewDoctor from "./pages/Doctor/ViewDoctor";
 import LoginPage from "./pages/Login";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import RolesPage from "./pages/Roles/Roles";
 import DoctorSchedulePage from "./pages/doctorSchedule";
+import RolesListPage from "./pages/Roles/RolesList";
+import AddRolePage from "./pages/Roles/AddRole";
 
 function AuthenticatedLayout() {
   const { user } = useAuth();
-  console.log("user : ", user);
+
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "4rem",
@@ -52,7 +53,7 @@ function AuthenticatedLayout() {
           </header>
           <main className="flex-1 overflow-auto">
             <Switch>
-              <Route path="/dashboard" component={Dashboard} />
+              <Route path="/" component={Dashboard} />
               <Route path="/biomarkers" component={Biomarkers} />
               <Route path="/protocols" component={Protocols} />
               <Route path="/booking" component={Booking} />
@@ -61,9 +62,10 @@ function AuthenticatedLayout() {
               <Route path="/community" component={Community} />
               <Route path="/chat" component={Chat} />
               <Route path="/profile" component={Profile} />
+              <Route path="/roles" component={RolesListPage} />
+              <Route path="/roles/add" component={AddRolePage} />
+              <Route path="/roles/edit/:id" component={AddRolePage} />
               <Route path="/physician" component={PhysicianDashboard} />
-              <Route path="/doctors" component={DoctorList} />
-
               <Route path="/admin">
                 {() => (
                   <ErrorBoundary>
@@ -72,6 +74,8 @@ function AuthenticatedLayout() {
                 )}
               </Route>
               <Route component={NotFound} />
+
+              {/* <Route path="/api/login" component={LoginPage} /> */}
             </Switch>
           </main>
         </div>
@@ -85,9 +89,7 @@ function Router() {
 
   const [location] = useLocation();
   usePageTracking();
-  console.log("isAuthenticated ", isAuthenticated);
-  console.log("isLoading ", isLoading);
-  // usePageTracking();
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -100,35 +102,20 @@ function Router() {
   }
 
   if (!isAuthenticated) {
-    // return location !== "/" ? <AuthLayout /> : <Landing />;
-    // Allow unauthenticated access to certain doctor routes
-    if (location.startsWith("/doctors/view/")) {
-      return <ViewDoctor />;
-    }
-    if (location.startsWith("/doctors/edit/")) {
-      return <AddDoctor />;
-    }
-
     switch (location) {
-      case "/api/login":
+      case '/api/login':
         return <LoginPage />;
-      case "/doctors/add":
-        return <AddDoctor />;
-      case "/doctors":
-        return <DoctorList />;
-      case "/api/doctor-schedule":
+      case '/forgot-password':
+        return <ForgotPasswordPage />;
+      case '/api/doctor-schedule':
         return <DoctorSchedulePage />;
+      case '/roles':
+        return <RolesListPage />;
       default:
         return <Landing />;
-      // switch (location) {
-      //   case '/api/login':
-      //     return <LoginPage />;
-      //   case '/api/doctor-schedule':
-      //     return <DoctorSchedulePage />;
-      //   default:
-      //     return <Landing />;
     }
   }
+
 
   return <AuthenticatedLayout />;
 }
