@@ -35,9 +35,16 @@ const teamMemberSchema = z.object({
 
 type TeamMemberFormData = z.infer<typeof teamMemberSchema>;
 
+interface Role {
+    id: string;
+    Name: string;
+    Description?: string;
+}
+
 const TeamMemberForm = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
+    const [roles, setRoles] = useState<Role[]>([]);
     const { token } = useAuth();
     const [, setLocation] = useLocation();
     const [match, params] = useRoute("/teammembers/:action/:id?");
@@ -63,7 +70,7 @@ const TeamMemberForm = () => {
             gender_type: "",
             dob: "",
             members_serial_no: "",
-            access_role_id: "3bff311a-4ad8-48e0-acc2-1691ec71710d", // Default from example
+            access_role_id: "",
             status: 1,
             profile_url: "",
         },
@@ -125,6 +132,30 @@ const TeamMemberForm = () => {
         fetchMemberData();
     }, [isEditMode, memberId, token, setValue]);
 
+    // Fetch roles list
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const response = await apiRequest("GET", "/user/role?page=1&limit=10");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch roles");
+                }
+                const data = await response.json();
+                console.log(data, "data");
+                setRoles(data.roles || data.data || data);
+            } catch (error) {
+                console.error("Error fetching roles:", error);
+                toast({
+                    title: "Warning",
+                    description: "Failed to load roles list",
+                    variant: "destructive",
+                });
+            }
+        };
+
+        fetchRoles();
+    }, [token]);
+    console.log(roles, "roles");
     const onSubmit = async (data: TeamMemberFormData) => {
         try {
             setIsLoading(true);
@@ -340,14 +371,23 @@ const TeamMemberForm = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="access_role_id" className="text-gray-700">
-                                        Access Role ID
+                                        Access Role
                                     </Label>
-                                    <Input
-                                        id="access_role_id"
-                                        {...register("access_role_id")}
-                                        placeholder="Enter access role ID"
-                                        className="border-gray-300 focus:ring-teal-500 focus:border-transparent"
-                                    />
+                                    <Select
+                                        onValueChange={(value) => setValue("access_role_id", value)}
+                                        value={watch("access_role_id")}
+                                    >
+                                        <SelectTrigger className="border-gray-300 focus:ring-teal-500 focus:border-transparent">
+                                            <SelectValue placeholder="Select role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {roles.map((role) => (
+                                                <SelectItem key={role.name} value={role.id}>
+                                                    {role.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     {errors.access_role_id && (
                                         <p className="text-sm text-red-500">
                                             {errors.access_role_id.message}
