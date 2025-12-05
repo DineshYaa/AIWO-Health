@@ -25,25 +25,36 @@ const ROLE_TYPES = [
 const MODULES = [
     { id: 'patients', name: 'Patients', icon: '👤' },
     { id: 'doctors', name: 'Doctors', icon: '👨‍⚕️' },
-    { id: 'appointments', name: 'Appointments', icon: '📅' },
-    { id: 'billing_payment', name: 'Billing Payment', icon: '💳' },
-    { id: 'schedule', name: 'Schedule', icon: '🕐' },
-    { id: 'billing_package', name: 'Billing Package', icon: '📦' },
-    { id: 'billing_sub_package', name: 'Billing Sub Package', icon: '📦' },
-    { id: 'purchase', name: 'Purchase', icon: '🛒' },
-    { id: 'purchase_return', name: 'Purchase Return', icon: '↩️' },
-    { id: 'purchase_request', name: 'Purchase Request', icon: '📝' },
-    { id: 'sales', name: 'Sales', icon: '💰' },
-    { id: 'sales_return', name: 'Sales Return', icon: '↩️' },
+    { id: 'settings', name: 'Settings', icon: '⚙️' },
+    // { id: 'appointments', name: 'Appointments', icon: '📅' },
+    // { id: 'billing_payment', name: 'Billing Payment', icon: '💳' },
+    // { id: 'schedule', name: 'Schedule', icon: '🕐' },
+    // { id: 'billing_package', name: 'Billing Package', icon: '📦' },
+    // { id: 'billing_sub_package', name: 'Billing Sub Package', icon: '📦' },
+    // { id: 'purchase', name: 'Purchase', icon: '🛒' },
+    // { id: 'purchase_return', name: 'Purchase Return', icon: '↩️' },
+    // { id: 'purchase_request', name: 'Purchase Request', icon: '📝' },
+    // { id: 'sales', name: 'Sales', icon: '💰' },
+    // { id: 'sales_return', name: 'Sales Return', icon: '↩️' },
 ];
 
-const PERMISSIONS = ['add', 'view', 'edit', 'delete', 'full_access'];
+const PERMISSIONS = ['add', 'view', 'edit', 'delete', 'allaccess'];
+
+interface ModulePermissions {
+    add: boolean;
+    view: boolean;
+    edit: boolean;
+    delete: boolean;
+    allaccess: boolean;
+    noaccess: boolean;
+}
 
 interface Role {
     id: string;
     role_type: 'doctor' | 'admin';
     role_name: string;
-    permissions: Record<string, string[]>;
+    user_type: string;
+    permissions: Record<string, ModulePermissions>;
     created_at: string;
 }
 
@@ -55,35 +66,39 @@ export default function AddRolePage() {
 
     const [roleType, setRoleType] = useState<string>('');
     const [roleName, setRoleName] = useState('');
-    const [permissions, setPermissions] = useState<Record<string, string[]>>({});
+    const [userType, setUserType] = useState<string>('1'); // Default to admin
+    const [permissions, setPermissions] = useState<Record<string, ModulePermissions>>({});
     const { toast } = useToast();
 
     // Fetch role for editing
-    const { data: existingRole } = useQuery<Role>({
+    const { data: roleResponse } = useQuery({
         queryKey: ['/api/roles', roleId],
         queryFn: async () => {
-            const response: any = await apiRequest('GET', `/auth/roles/${roleId}`, undefined);
-            return response.data;
+            const response: any = await apiRequest('GET', `/user/role/${roleId}`, undefined);
+            return response.json();
         },
         enabled: isEditMode,
     });
 
+    const existingRole = roleResponse?.role;
+
     // Load existing role data
     useEffect(() => {
         if (existingRole) {
-            setRoleType(existingRole.role_type);
-            setRoleName(existingRole.role_name);
+            setRoleType(existingRole.name || '');
+            setRoleName(existingRole.name || '');
+            setUserType(existingRole.user_type || '1');
             setPermissions(existingRole.permissions || {});
         }
     }, [existingRole]);
 
     // Create/Update role mutation
     const saveRoleMutation = useMutation({
-        mutationFn: async (data: { role_type: string; role_name: string; permissions: Record<string, string[]> }) => {
+        mutationFn: async (data: { name: string; user_type: string; isPrimary: boolean; permissions: Record<string, ModulePermissions> }) => {
             if (isEditMode) {
-                return await apiRequest('PUT', `/auth/roles/${roleId}`, data);
+                return await apiRequest('PUT', `/user/role/${roleId}`, data);
             }
-            return await apiRequest('POST', '/auth/roles', data);
+            return await apiRequest('POST', '/user/role', data);
         },
         onSuccess: () => {
             toast({
@@ -104,28 +119,45 @@ export default function AddRolePage() {
 
     const handlePermissionToggle = (moduleId: string, permission: string) => {
         setPermissions((prev) => {
-            const modulePerms = prev[moduleId] || [];
-            const hasPermission = modulePerms.includes(permission);
+            const modulePerms = prev[moduleId] || {
+                add: false,
+                view: false,
+                edit: false,
+                delete: false,
+                allaccess: false,
+                noaccess: true,
+            };
 
-            if (permission === 'full_access') {
+            if (permission === 'allaccess') {
+                // Toggle all access
+                const newAllAccess = !modulePerms.allaccess;
                 return {
                     ...prev,
-                    [moduleId]: hasPermission ? [] : [...PERMISSIONS],
+                    [moduleId]: {
+                        add: newAllAccess,
+                        view: newAllAccess,
+                        edit: newAllAccess,
+                        delete: newAllAccess,
+                        allaccess: newAllAccess,
+                        noaccess: !newAllAccess,
+                    },
                 };
             }
 
-            const newPerms = hasPermission
-                ? modulePerms.filter((p) => p !== permission && p !== 'full_access')
-                : [...modulePerms.filter((p) => p !== 'full_access'), permission];
+            // Toggle individual permission
+            const newModulePerms = {
+                ...modulePerms,
+                [permission]: !modulePerms[permission as keyof ModulePermissions],
+            };
 
-            const allSelected = PERMISSIONS.filter((p) => p !== 'full_access').every((p) => newPerms.includes(p));
-            if (allSelected && !newPerms.includes('full_access')) {
-                newPerms.push('full_access');
-            }
+            // Check if all permissions are selected
+            const allSelected = newModulePerms.add && newModulePerms.view && newModulePerms.edit && newModulePerms.delete;
+            newModulePerms.allaccess = allSelected;
+            newModulePerms.noaccess = !allSelected && !newModulePerms.add && !newModulePerms.view && !newModulePerms.edit && !newModulePerms.delete;
 
             return {
                 ...prev,
-                [moduleId]: newPerms,
+                [moduleId]: newModulePerms,
             };
         });
     };
@@ -142,14 +174,15 @@ export default function AddRolePage() {
         }
 
         saveRoleMutation.mutate({
-            role_type: roleType,
-            role_name: roleName,
+            name: roleType,
+            user_type: userType,
+            isPrimary: false,
             permissions,
         });
     };
 
     const getModulesWithFullAccess = () => {
-        return Object.entries(permissions).filter(([_, perms]) => perms.includes('full_access')).length;
+        return Object.entries(permissions).filter(([_, perms]) => perms.allaccess).length;
     };
 
     return (
@@ -250,7 +283,7 @@ export default function AddRolePage() {
                             </div>
                             <div className="flex items-center justify-center gap-1">
                                 <Check className="w-4 h-4" />
-                                Full Access
+                                All Access
                             </div>
                         </div>
 
@@ -269,7 +302,7 @@ export default function AddRolePage() {
                                     <div key={permission} className="flex justify-center">
                                         <input
                                             type="checkbox"
-                                            checked={permissions[module.id]?.includes(permission) || false}
+                                            checked={permissions[module.id]?.[permission as keyof ModulePermissions] || false}
                                             onChange={() => handlePermissionToggle(module.id, permission)}
                                             className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                                         />

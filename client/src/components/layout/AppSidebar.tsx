@@ -55,11 +55,6 @@ const baseNavItems = [
     icon: ClipboardList,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-  {
     title: "Telemedicine",
     url: "/telemedicine",
     icon: Video,
@@ -89,6 +84,12 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+
 
 ];
 
@@ -98,28 +99,35 @@ const physicianNavItem = {
   icon: Stethoscope,
 };
 
-const adminNavItem = {
-  title: "Admin",
-  url: "/admin",
-  icon: Settings,
-};
-
-
-
-const rolesNavItem = {
-  title: "Roles",
-  url: "/roles",
-  icon: Shield,
-};
+// Admin navigation items
+const adminNavItems = [
+  {
+    title: "Roles",
+    url: "/roles",
+    icon: Shield,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: Settings,
+  },
+];
 
 export function AppSidebar({ user }: AppSidebarProps) {
+  console.log(user);
   const userRole = user?.role || "user";
-  console.log(userRole);
+  const isAdmin = user?.user_type == 1; // user_type 1 = admin
+  console.log('userRole:', userRole, 'isAdmin:', isAdmin);
 
   const navItems = [
     ...baseNavItems,
-    ...(userRole === 'physician' || userRole === 'admin' ? [physicianNavItem] : []),
-    // ...(userRole === 'admin' ? [rolesNavItem, settingsNavItem, adminNavItem] : []),
+    ...(userRole === 'physician' || isAdmin ? [physicianNavItem] : []),
+    ...(isAdmin ? adminNavItems : []),
   ];
   const [location] = useLocation();
 

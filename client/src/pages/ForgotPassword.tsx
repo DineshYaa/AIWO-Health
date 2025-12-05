@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Loader2, Mail, Lock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Mail, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -34,6 +34,8 @@ type Step = 'email' | 'otp' | 'password';
 export default function ForgotPasswordPage() {
     const [step, setStep] = useState<Step>('email');
     const [email, setEmail] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const { toast } = useToast();
     const [, setLocation] = useLocation();
 
@@ -100,12 +102,32 @@ export default function ForgotPasswordPage() {
         },
     });
 
+    // Mutation: Resend OTP
+    const resendOtpMutation = useMutation({
+        mutationFn: async () => {
+            return await apiRequest('POST', '/auth/resend-otp', { email });
+        },
+        onSuccess: () => {
+            toast({
+                title: 'OTP Resent',
+                description: 'A new verification code has been sent to your email.',
+            });
+        },
+        onError: (error: Error) => {
+            toast({
+                title: 'Error',
+                description: error.message || 'Failed to resend OTP. Please try again.',
+                variant: 'destructive',
+            });
+        },
+    });
+
     // Mutation: Reset password
     const resetPasswordMutation = useMutation({
         mutationFn: async (data: { password: string }) => {
             return await apiRequest('POST', '/auth/reset-password', {
                 email,
-                password: data.password,
+                newPassword: data.password,
             });
         },
         onSuccess: () => {
@@ -281,10 +303,11 @@ export default function ForgotPasswordPage() {
 
                                     <button
                                         type="button"
-                                        onClick={() => sendOtpMutation.mutate({ email })}
-                                        className="w-full text-teal-600 hover:text-teal-700 text-sm"
+                                        onClick={() => resendOtpMutation.mutate()}
+                                        disabled={resendOtpMutation.isPending}
+                                        className="w-full text-teal-600 hover:text-teal-700 text-sm disabled:text-teal-300"
                                     >
-                                        Didn't receive code? Resend
+                                        {resendOtpMutation.isPending ? 'Sending...' : "Didn't receive code? Resend"}
                                     </button>
                                 </form>
                             </div>
@@ -304,12 +327,21 @@ export default function ForgotPasswordPage() {
                                 <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-5">
                                     <div>
                                         <Label>New Password</Label>
-                                        <Input
-                                            {...passwordForm.register('password')}
-                                            type="password"
-                                            placeholder="Enter new password"
-                                            className={`w-full px-4 py-3 border rounded-lg ${passwordForm.formState.errors.password ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...passwordForm.register('password')}
+                                                type={showPassword ? 'text' : 'password'}
+                                                placeholder="Enter new password"
+                                                className={`w-full px-4 py-3 border rounded-lg pr-12 ${passwordForm.formState.errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                            >
+                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
                                         {passwordForm.formState.errors.password && (
                                             <p className="text-sm text-red-600 mt-1">
                                                 {passwordForm.formState.errors.password.message}
@@ -319,12 +351,21 @@ export default function ForgotPasswordPage() {
 
                                     <div>
                                         <Label>Confirm Password</Label>
-                                        <Input
-                                            {...passwordForm.register('confirmPassword')}
-                                            type="password"
-                                            placeholder="Confirm new password"
-                                            className={`w-full px-4 py-3 border rounded-lg ${passwordForm.formState.errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...passwordForm.register('confirmPassword')}
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                placeholder="Confirm new password"
+                                                className={`w-full px-4 py-3 border rounded-lg pr-12 ${passwordForm.formState.errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
                                         {passwordForm.formState.errors.confirmPassword && (
                                             <p className="text-sm text-red-600 mt-1">
                                                 {passwordForm.formState.errors.confirmPassword.message}

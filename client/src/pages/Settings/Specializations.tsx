@@ -18,6 +18,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 interface Specialization {
     id: string;
     Name: string;
+    status?: string;
     created_at?: string;
     updated_at?: string;
     deleted_at?: string | null;
@@ -29,6 +30,7 @@ export default function SpecializationsPage() {
     const [deletingItem, setDeletingItem] = useState<Specialization | null>(null);
     const [editingItem, setEditingItem] = useState<Specialization | null>(null);
     const [name, setName] = useState('');
+    const [status, setStatus] = useState<string>('Active');
     const [searchTerm, setSearchTerm] = useState('');
     const [pageNo, setPageNo] = useState(1);
     const pageSize = 10;
@@ -52,15 +54,15 @@ export default function SpecializationsPage() {
 
     // Create/Update mutation
     const saveMutation = useMutation({
-        mutationFn: async (data: { name: string }) => {
+        mutationFn: async (data: { name: string; status: string }) => {
             if (editingItem) {
                 return await apiRequest(
                     'PUT',
                     `/doctor/specializations/UpdateSpecialization/${editingItem.id}`,
-                    { Name: data.name }
+                    { Name: data.name, status: data.status }
                 );
             }
-            return await apiRequest('POST', '/doctor/specializations/InsertSpecialization', { Name: data.name });
+            return await apiRequest('POST', '/doctor/specializations/InsertSpecialization', { Name: data.name, status: data.status });
         },
         onSuccess: () => {
             toast({
@@ -115,6 +117,7 @@ export default function SpecializationsPage() {
 
                 setEditingItem(data.data);
                 setName(data.data.Name || '');
+                setStatus(data.data.status || 'Active');
             } catch (error) {
                 toast({
                     title: 'Error',
@@ -126,6 +129,7 @@ export default function SpecializationsPage() {
         } else {
             setEditingItem(null);
             setName('');
+            setStatus('Active');
         }
         setIsDialogOpen(true);
     };
@@ -134,6 +138,7 @@ export default function SpecializationsPage() {
         setIsDialogOpen(false);
         setEditingItem(null);
         setName('');
+        setStatus('Active');
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -147,7 +152,7 @@ export default function SpecializationsPage() {
             return;
         }
 
-        saveMutation.mutate({ name });
+        saveMutation.mutate({ name, status });
     };
 
     const handleDelete = (item: Specialization) => {
@@ -211,6 +216,17 @@ export default function SpecializationsPage() {
                                         />
                                     </div>
 
+                                    <div>
+                                        <Label>Status</Label>
+                                        <select
+                                            value={status}
+                                            onChange={(e) => setStatus(e.target.value)}
+                                            className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+                                        >
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
 
 
                                     <div className="flex justify-end gap-3 pt-4">
@@ -269,6 +285,9 @@ export default function SpecializationsPage() {
                             <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
                                 Name
                             </th>
+                            <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
+                                Status
+                            </th>
                             <th className="px-6 py-3 text-right text-sm font-semibold uppercase tracking-wider">
                                 Actions
                             </th>
@@ -277,7 +296,7 @@ export default function SpecializationsPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {isLoading ? (
                             <tr>
-                                <td colSpan={2} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
                                     Loading...
                                 </td>
                             </tr>
@@ -286,6 +305,16 @@ export default function SpecializationsPage() {
                                 <tr key={item.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className="text-sm font-medium text-gray-900">{item.Name}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'Active'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
+                                                }`}
+                                        >
+                                            {item.status || 'Active'}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
@@ -311,7 +340,7 @@ export default function SpecializationsPage() {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={2} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
                                     No specializations found. Click "Add New" to create one.
                                 </td>
                             </tr>
