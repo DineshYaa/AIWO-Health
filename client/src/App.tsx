@@ -32,6 +32,7 @@ import RolesListPage from "./pages/Roles/RolesList";
 import AddRolePage from "./pages/Roles/AddRole";
 import DoctorList from "./pages/Doctor/DoctorList";
 import AddDoctor from "./pages/Doctor/AddDoctor";
+import SettingsPage from "./pages/Settings/Settings";
 
 function AuthenticatedLayout() {
   const { user } = useAuth();
@@ -72,9 +73,11 @@ function AuthenticatedLayout() {
                 path="/api/doctor-schedule"
                 component={DoctorSchedulePage}
               />
+
               <Route path="/doctors" component={DoctorList} />
               <Route path="/doctors/add" component={AddDoctor} />
               <Route path="/doctors/edit/:id" component={AddDoctor} />
+              <Route path="/settings" component={SettingsPage} />
               <Route path="/doctors">
                 {() => (
                   <ErrorBoundary>
