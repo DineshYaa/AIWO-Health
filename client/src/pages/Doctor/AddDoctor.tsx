@@ -18,7 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, useLocation, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const doctorSchema = z.object({
   first_name: z.string().min(2, "First name is required"),
@@ -58,6 +58,7 @@ const AddDoctor = () => {
   const { token } = useAuth();
   const [, setLocation] = useLocation();
   const [match, params] = useRoute("/doctors/:action/:id?");
+  const queryClient = useQueryClient();
 
   const isEditMode = match && params?.action === "edit" && params?.id;
   const doctorId = params?.id;
@@ -184,6 +185,8 @@ const AddDoctor = () => {
       }
 
       const result = await response.json();
+
+      await queryClient.invalidateQueries({ queryKey: ["doctors"] });
 
       toast({
         title: "Success",

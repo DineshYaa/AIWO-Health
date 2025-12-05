@@ -52,7 +52,12 @@ const baseNavItems = [
   {
     title: "Doctors",
     url: "/doctors",
-    icon: ClipboardList,
+    icon: Stethoscope,
+  },
+  {
+    title: "Patients",
+    url: "/patients",
+    icon: Users,
   },
   {
     title: "Settings",
@@ -89,7 +94,6 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
-
 ];
 
 const physicianNavItem = {
@@ -104,8 +108,6 @@ const adminNavItem = {
   icon: Settings,
 };
 
-
-
 const rolesNavItem = {
   title: "Roles",
   url: "/roles",
@@ -118,7 +120,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const navItems = [
     ...baseNavItems,
-    ...(userRole === 'physician' || userRole === 'admin' ? [physicianNavItem] : []),
+    ...(userRole === "physician" || userRole === "admin"
+      ? [physicianNavItem]
+      : []),
     // ...(userRole === 'admin' ? [rolesNavItem, settingsNavItem, adminNavItem] : []),
   ];
   const [location] = useLocation();
@@ -171,10 +175,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
-                        : "hover-elevate"
-                        }`}
+                      className={`py-3 px-4 rounded-lg transition-colors ${
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
+                          : "hover-elevate"
+                      }`}
                     >
                       <Link
                         href={item.url}
