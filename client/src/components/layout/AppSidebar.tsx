@@ -60,6 +60,11 @@ const baseNavItems = [
     icon: Settings,
   },
   {
+    title: "TeamMembers",
+    url: "/teamMembers",
+    icon: Users,
+  },
+  {
     title: "Telemedicine",
     url: "/telemedicine",
     icon: Video,

@@ -34,7 +34,10 @@ import DoctorList from "./pages/Doctor/DoctorList";
 import AddDoctor from "./pages/Doctor/AddDoctor";
 import SettingsPage from "./pages/Settings/Settings";
 import ViewDoctor from "./pages/Doctor/ViewDoctor";
+import TeamMemberManagement from "./pages/teammember/teamMember.Management";
 
+import TeamMemberView from "./pages/teammember/teamMember.View";
+import TeamMemberForm from "./pages/teammember/teamMember.Form";
 function AuthenticatedLayout() {
   const { user } = useAuth();
 
@@ -81,6 +84,10 @@ function AuthenticatedLayout() {
               <Route path="/settings" component={SettingsPage} />
               {/* <Route path="/doctors"> */}
               <Route path="/doctors/view/:id" component={ViewDoctor} />
+              <Route path="/teamMembers" component={TeamMemberManagement} />
+              <Route path="/teammembers/add" component={TeamMemberForm} />
+              <Route path="/teammembers/edit/:id" component={TeamMemberForm} />
+              <Route path="/teammembers/view/:id" component={TeamMemberView} />
               {/* <Route path="/doctors">
                 {() => (
                   <ErrorBoundary>
