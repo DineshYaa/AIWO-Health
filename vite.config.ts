@@ -75,6 +75,21 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "^/user/role/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/auth/verify-otp": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/doctor/patients/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
     },
     fs: {
       strict: true,

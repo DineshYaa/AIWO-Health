@@ -27,7 +27,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import LoginPage from "./pages/Login";
 import ForgotPasswordPage from "./pages/ForgotPassword";
 import RolesPage from "./pages/Roles/Roles";
-import DoctorSchedulePage from "./pages/doctorSchedule";
+import DoctorSchedulePage from "./pages/Schedule/doctorSchedule";
 import RolesListPage from "./pages/Roles/RolesList";
 import AddRolePage from "./pages/Roles/AddRole";
 import DoctorList from "./pages/Doctor/DoctorList";
@@ -35,6 +35,9 @@ import AddDoctor from "./pages/Doctor/AddDoctor";
 import SettingsPage from "./pages/Settings/Settings";
 import ViewDoctor from "./pages/Doctor/ViewDoctor";
 import TeamMemberManagement from "./pages/teammember/teamMember.Management";
+import PatientList from "./pages/Patient/PatientList";
+import AddPatient from "./pages/Patient/AddPatient";
+import ViewPatient from "./pages/Patient/ViewPatient";
 
 import TeamMemberView from "./pages/teammember/teamMember.View";
 import TeamMemberForm from "./pages/teammember/teamMember.Form";
@@ -81,8 +84,6 @@ function AuthenticatedLayout() {
               <Route path="/doctors" component={DoctorList} />
               <Route path="/doctors/add" component={AddDoctor} />
               <Route path="/doctors/edit/:id" component={AddDoctor} />
-              <Route path="/settings" component={SettingsPage} />
-              {/* <Route path="/doctors"> */}
               <Route path="/doctors/view/:id" component={ViewDoctor} />
               <Route path="/teamMembers" component={TeamMemberManagement} />
               <Route path="/teammembers/add" component={TeamMemberForm} />
@@ -95,6 +96,13 @@ function AuthenticatedLayout() {
                   </ErrorBoundary>
                 )}
               </Route> */}
+
+              <Route path="/patients" component={PatientList} />
+              <Route path="/patients/add" component={AddPatient} />
+              <Route path="/patients/edit/:id" component={AddPatient} />
+              <Route path="/patients/view/:id" component={ViewPatient} />
+
+              <Route path="/settings" component={SettingsPage} />
 
               <Route path="/admin">
                 {() => (
