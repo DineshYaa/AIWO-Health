@@ -60,11 +60,6 @@ const baseNavItems = [
     icon: Users,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-  {
     title: "Telemedicine",
     url: "/telemedicine",
     icon: Video,
@@ -94,6 +89,13 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+
+
 ];
 
 const physicianNavItem = {
@@ -102,28 +104,35 @@ const physicianNavItem = {
   icon: Stethoscope,
 };
 
-const adminNavItem = {
-  title: "Admin",
-  url: "/admin",
-  icon: Settings,
-};
-
-const rolesNavItem = {
-  title: "Roles",
-  url: "/roles",
-  icon: Shield,
-};
+// Admin navigation items
+const adminNavItems = [
+  {
+    title: "Roles",
+    url: "/roles",
+    icon: Shield,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: Settings,
+  },
+];
 
 export function AppSidebar({ user }: AppSidebarProps) {
+  console.log(user);
   const userRole = user?.role || "user";
-  console.log(userRole);
+  const isAdmin = user?.user_type == 1; // user_type 1 = admin
+  console.log('userRole:', userRole, 'isAdmin:', isAdmin);
 
   const navItems = [
     ...baseNavItems,
-    ...(userRole === "physician" || userRole === "admin"
-      ? [physicianNavItem]
-      : []),
-    // ...(userRole === 'admin' ? [rolesNavItem, settingsNavItem, adminNavItem] : []),
+    ...(userRole === 'physician' || isAdmin ? [physicianNavItem] : []),
+    ...(isAdmin ? adminNavItems : []),
   ];
   const [location] = useLocation();
 
@@ -175,11 +184,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${
-                        isActive
+                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
                           : "hover-elevate"
-                      }`}
+                        }`}
                     >
                       <Link
                         href={item.url}

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Shield, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Shield, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -14,29 +14,45 @@ const ROLE_TYPES = [
 
 interface Role {
     id: string;
-    role_type: 'doctor' | 'admin';
-    role_name: string;
-    permissions: Record<string, string[]>;
+    name: string;
+    user_type: string;
+    is_primary: string;
     created_at: string;
+}
+
+interface RolesResponse {
+    message: string;
+    roles: Role[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 }
 
 export default function RolesListPage() {
     const { toast } = useToast();
     const [, setLocation] = useLocation();
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     // Fetch roles
-    const { data: roles, isLoading } = useQuery<Role[]>({
-        queryKey: ['/api/roles'],
+    const { data: response, isLoading } = useQuery<RolesResponse>({
+        queryKey: ['/api/roles', currentPage],
         queryFn: async () => {
-            const response: any = await apiRequest('GET', '/auth/roles', undefined);
-            return response.data || [];
+            const res: any = await apiRequest('GET', `/user/role?page=${currentPage}&limit=${pageSize}`, undefined);
+            return res.json();
         },
     });
+
+    const roles = response?.roles || [];
+    const pagination = response?.pagination;
 
     // Delete role mutation
     const deleteRoleMutation = useMutation({
         mutationFn: async (roleId: string) => {
-            return await apiRequest('DELETE', `/auth/roles/${roleId}`, undefined);
+            return await apiRequest('DELETE', `/user/role/${roleId}`, undefined);
         },
         onSuccess: () => {
             toast({
@@ -54,10 +70,6 @@ export default function RolesListPage() {
         },
     });
 
-    const getModulesWithFullAccess = (rolePermissions: Record<string, string[]>) => {
-        return Object.entries(rolePermissions).filter(([_, perms]) => perms.includes('full_access')).length;
-    };
-
     const handleAddRole = () => {
         setLocation('/roles/add');
     };
@@ -70,6 +82,10 @@ export default function RolesListPage() {
         if (confirm('Are you sure you want to delete this role?')) {
             deleteRoleMutation.mutate(roleId);
         }
+    };
+
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
     };
 
     return (
@@ -93,21 +109,18 @@ export default function RolesListPage() {
             <div className="bg-white rounded-lg shadow border border-gray-200">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
+                        <thead className="bg-teal-600 text-white">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Role Type
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
                                     Role Name
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Permissions
+                                <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
+                                    User Type
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
                                     Created At
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-right text-sm font-semibold uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -115,13 +128,13 @@ export default function RolesListPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
                                         Loading roles...
                                     </td>
                                 </tr>
                             ) : roles && roles.length > 0 ? (
                                 roles.map((role) => {
-                                    const roleTypeInfo = ROLE_TYPES.find((t) => t.value === role.role_type);
+                                    const roleTypeInfo = ROLE_TYPES.find((t) => t.value === role.name);
                                     const RoleIcon = roleTypeInfo?.icon || Shield;
                                     return (
                                         <tr key={role.id} className="hover:bg-gray-50">
@@ -130,15 +143,12 @@ export default function RolesListPage() {
                                                     <div className={`p-2 rounded-lg ${roleTypeInfo?.color || 'bg-gray-500'}`}>
                                                         <RoleIcon className="w-4 h-4 text-white" />
                                                     </div>
-                                                    <span className="text-sm font-medium text-gray-900 capitalize">{role.role_type}</span>
+                                                    <span className="text-sm font-medium text-gray-900 capitalize">{role.name}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm text-gray-900">{role.role_name}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                                                    {getModulesWithFullAccess(role.permissions)} modules with full access
+                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-teal-100 text-teal-800">
+                                                    {role.user_type === '1' ? 'Admin' : 'User'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -150,7 +160,7 @@ export default function RolesListPage() {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleEditRole(role.id)}
-                                                        className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </Button>
@@ -169,7 +179,7 @@ export default function RolesListPage() {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
                                         No roles found. Click "Add Role" to create one.
                                     </td>
                                 </tr>
@@ -177,6 +187,38 @@ export default function RolesListPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination */}
+                {pagination && pagination.totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div className="text-sm text-gray-700">
+                            Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total roles)
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                                Previous
+                            </Button>
+                            <span className="text-sm text-gray-700">
+                                Page {currentPage} of {pagination.totalPages}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === pagination.totalPages}
+                            >
+                                Next
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
