@@ -60,7 +60,7 @@ export default function LoginPage() {
             });
 
             // Redirect to dashboard
-            setLocation('/');
+            setLocation('/admin');
         },
         onError: (error: Error) => {
             console.error('Login Error ❌', error);
@@ -169,7 +169,13 @@ export default function LoginPage() {
                                     <Input type="checkbox" {...register('rememberMe')} />
                                     <span className="ml-1">Remember me</span>
                                 </Label>
-                                <a href="#" className="text-teal-600 text-sm">Forgot password?</a>
+                                <button
+                                    type="button"
+                                    onClick={() => setLocation('/forgot-password')}
+                                    className="text-teal-600 hover:text-teal-700 text-sm font-medium transition"
+                                >
+                                    Forgot password?
+                                </button>
                             </div>
 
                             {/* BUTTON */}

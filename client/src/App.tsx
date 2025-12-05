@@ -25,6 +25,10 @@ import Community from "@/pages/Community";
 import PhysicianDashboard from "@/pages/PhysicianDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import LoginPage from "./pages/Login";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import RolesPage from "./pages/Roles";
+import RolesListPage from "./pages/roles/RolesList";
+import AddRolePage from "./pages/roles/AddRole";
 import DoctorSchedulePage from "./pages/doctorSchedule";
 
 function AuthenticatedLayout() {
@@ -58,6 +62,9 @@ function AuthenticatedLayout() {
               <Route path="/community" component={Community} />
               <Route path="/chat" component={Chat} />
               <Route path="/profile" component={Profile} />
+              <Route path="/roles" component={RolesListPage} />
+              <Route path="/roles/add" component={AddRolePage} />
+              <Route path="/roles/edit/:id" component={AddRolePage} />
               <Route path="/physician" component={PhysicianDashboard} />
               <Route path="/admin">
                 {() => (
@@ -98,8 +105,12 @@ function Router() {
     switch (location) {
       case '/api/login':
         return <LoginPage />;
+      case '/forgot-password':
+        return <ForgotPasswordPage />;
       case '/api/doctor-schedule':
         return <DoctorSchedulePage />;
+      case '/roles':
+        return <RolesListPage />;
       default:
         return <Landing />;
     }

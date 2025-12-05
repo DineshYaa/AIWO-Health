@@ -93,13 +93,19 @@ const adminNavItem = {
   icon: Settings,
 };
 
+const rolesNavItem = {
+  title: "Roles",
+  url: "/roles",
+  icon: Shield,
+};
+
 export function AppSidebar({ user }: AppSidebarProps) {
   const userRole = user?.role || 'user';
-  
+
   const navItems = [
     ...baseNavItems,
     ...(userRole === 'physician' || userRole === 'admin' ? [physicianNavItem] : []),
-    ...(userRole === 'admin' ? [adminNavItem] : []),
+    ...(userRole === 'admin' ? [rolesNavItem, adminNavItem] : []),
   ];
   const [location] = useLocation();
 
@@ -133,24 +139,23 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </div>
         </Link>
       </SidebarHeader>
-      
+
       <SidebarContent className="px-3 py-4">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                const isActive = location === item.url || 
+                const isActive = location === item.url ||
                   (item.url !== "/" && location.startsWith(item.url));
-                
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${
-                        isActive
+                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
                           : "hover-elevate"
-                      }`}
+                        }`}
                     >
                       <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
                         <item.icon className="w-5 h-5" />
@@ -168,8 +173,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent/50">
           <Avatar className="h-10 w-10 border-2 border-primary/20">
-            <AvatarImage 
-              src={user?.profileImageUrl || undefined} 
+            <AvatarImage
+              src={user?.profileImageUrl || undefined}
               alt={getDisplayName(user)}
               className="object-cover"
             />
