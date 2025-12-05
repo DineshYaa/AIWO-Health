@@ -18,6 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, useLocation, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 
 const doctorSchema = z.object({
   first_name: z.string().min(2, "First name is required"),
@@ -37,15 +38,9 @@ const doctorSchema = z.object({
   doctor_commission: z.string().min(1, "Commission is required"),
   gender_type: z.string().min(1, "Gender is required"),
   status: z.string().min(1, "Status is required"),
-  // Hidden fields
-  designation_id: z
-    .string()
-    .uuid("Invalid designation")
-    .default("e6a3877c-19bc-4fd3-a2e4-4ca5ca5b8106"),
-  specialization_id: z
-    .string()
-    .uuid("Invalid specialization")
-    .default("55f8cc83-c4c2-4330-8ef5-695aa6bf2781"),
+  // These fields are now user-selectable
+  designation_id: z.string().min(1, "Please select a designation"),
+  specialization_id: z.string().min(1, "Please select a specialization"),
   user_id: z
     .string()
     .uuid("Invalid user ID")
@@ -95,6 +90,33 @@ const AddDoctor = () => {
       doctor_commission: "",
     },
   });
+
+  // Fetch designations using useQuery
+  const { data: designationsResponse } = useQuery({
+    queryKey: ["/api/designations"],
+    queryFn: async () => {
+      const res = await apiRequest(
+        "GET",
+        "/doctor/designations/GetAllDesignations?pageNo=1&pagesize=100&pagination_required=false"
+      );
+      return res.json();
+    },
+  });
+
+  // Fetch specializations using useQuery
+  const { data: specializationsResponse } = useQuery({
+    queryKey: ["/api/specializations"],
+    queryFn: async () => {
+      const res = await apiRequest(
+        "GET",
+        "/doctor/specializations/GetAllSpecializations?pageNo=1&pagesize=100&pagination_required=false"
+      );
+      return res.json();
+    },
+  });
+
+  const designations = designationsResponse?.data || [];
+  const specializations = specializationsResponse?.data || [];
 
   // Fetch doctor data when in edit mode
   useEffect(() => {
@@ -395,6 +417,58 @@ const AddDoctor = () => {
                   {errors.experience && (
                     <p className="text-sm text-red-500">
                       {errors.experience.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="designation_id" className="text-gray-700">
+                    Designation *
+                  </Label>
+                  <Select
+                    onValueChange={(value) => setValue("designation_id", value)}
+                  >
+                    <SelectTrigger className="border-gray-300 focus:ring-teal-500 focus:border-transparent">
+                      <SelectValue placeholder="Select designation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {designations.map((item: any) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.Name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.designation_id && (
+                    <p className="text-sm text-red-500">
+                      {errors.designation_id.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="specialization_id" className="text-gray-700">
+                    Specialization *
+                  </Label>
+                  <Select
+                    onValueChange={(value) =>
+                      setValue("specialization_id", value)
+                    }
+                  >
+                    <SelectTrigger className="border-gray-300 focus:ring-teal-500 focus:border-transparent">
+                      <SelectValue placeholder="Select specialization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {specializations.map((item: any) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.Name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.specialization_id && (
+                    <p className="text-sm text-red-500">
+                      {errors.specialization_id.message}
                     </p>
                   )}
                 </div>
