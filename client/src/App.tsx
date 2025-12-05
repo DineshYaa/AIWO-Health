@@ -32,6 +32,7 @@ import RolesListPage from "./pages/Roles/RolesList";
 import AddRolePage from "./pages/Roles/AddRole";
 import DoctorList from "./pages/Doctor/DoctorList";
 import AddDoctor from "./pages/Doctor/AddDoctor";
+import SettingsPage from "./pages/Settings/Settings";
 import ViewDoctor from "./pages/Doctor/ViewDoctor";
 
 function AuthenticatedLayout() {
@@ -73,9 +74,12 @@ function AuthenticatedLayout() {
                 path="/api/doctor-schedule"
                 component={DoctorSchedulePage}
               />
+
               <Route path="/doctors" component={DoctorList} />
               <Route path="/doctors/add" component={AddDoctor} />
               <Route path="/doctors/edit/:id" component={AddDoctor} />
+              <Route path="/settings" component={SettingsPage} />
+              {/* <Route path="/doctors"> */}
               <Route path="/doctors/view/:id" component={ViewDoctor} />
               {/* <Route path="/doctors">
                 {() => (

@@ -17,23 +17,25 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface Designation {
     id: string;
-    name: string;
-    status: 'Active' | 'Inactive';
+    Name: string;
     created_at?: string;
+    updated_at?: string;
+    deleted_at?: string | null;
 }
 
 export default function DesignationsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [deletingItem, setDeletingItem] = useState<Designation | null>(null);
     const [editingItem, setEditingItem] = useState<Designation | null>(null);
     const [name, setName] = useState('');
-    const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
     const [searchTerm, setSearchTerm] = useState('');
     const [pageNo, setPageNo] = useState(1);
     const pageSize = 10;
     const { toast } = useToast();
 
     // Fetch designations
-    const { data: response, isLoading } = useQuery({
+    const { data: response, isLoading, refetch } = useQuery({
         queryKey: ['/api/designations', pageNo, searchTerm],
         queryFn: async () => {
             const res: any = await apiRequest(
@@ -50,15 +52,15 @@ export default function DesignationsPage() {
 
     // Create/Update mutation
     const saveMutation = useMutation({
-        mutationFn: async (data: { name: string; status: string }) => {
+        mutationFn: async (data: { name: string }) => {
             if (editingItem) {
                 return await apiRequest(
                     'PUT',
                     `/doctor/designations/UpdateDesignation/${editingItem.id}`,
-                    data
+                    { Name: data.name }
                 );
             }
-            return await apiRequest('POST', '/doctor/designations/InsertDesignation', data);
+            return await apiRequest('POST', '/doctor/designations/InsertDesignation', { Name: data.name });
         },
         onSuccess: () => {
             toast({
@@ -66,6 +68,7 @@ export default function DesignationsPage() {
                 description: `Designation has been ${editingItem ? 'updated' : 'created'} successfully.`,
             });
             queryClient.invalidateQueries({ queryKey: ['/api/designations'] });
+            refetch(); // Reload the list
             handleCloseDialog();
         },
         onError: (error: Error) => {
@@ -88,6 +91,7 @@ export default function DesignationsPage() {
                 description: 'Designation has been deleted successfully.',
             });
             queryClient.invalidateQueries({ queryKey: ['/api/designations'] });
+            refetch(); // Reload the list
         },
         onError: (error: Error) => {
             toast({
@@ -98,15 +102,30 @@ export default function DesignationsPage() {
         },
     });
 
-    const handleOpenDialog = (item?: Designation) => {
+    const handleOpenDialog = async (item?: Designation) => {
         if (item) {
-            setEditingItem(item);
-            setName(item.name);
-            setStatus(item.status);
+            // Fetch the designation by ID to get the latest data
+            try {
+                const res = await apiRequest(
+                    'GET',
+                    `/doctor/designations/GetDesignationById/${item.id}`,
+                    undefined
+                );
+                const data = await res.json();
+
+                setEditingItem(data.data);
+                setName(data.data.Name || '');
+            } catch (error) {
+                toast({
+                    title: 'Error',
+                    description: 'Failed to fetch designation details.',
+                    variant: 'destructive',
+                });
+                return;
+            }
         } else {
             setEditingItem(null);
             setName('');
-            setStatus('Active');
         }
         setIsDialogOpen(true);
     };
@@ -115,7 +134,6 @@ export default function DesignationsPage() {
         setIsDialogOpen(false);
         setEditingItem(null);
         setName('');
-        setStatus('Active');
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -129,12 +147,19 @@ export default function DesignationsPage() {
             return;
         }
 
-        saveMutation.mutate({ name, status });
+        saveMutation.mutate({ name });
     };
 
-    const handleDelete = (id: string) => {
-        if (confirm('Are you sure you want to delete this designation?')) {
-            deleteMutation.mutate(id);
+    const handleDelete = (item: Designation) => {
+        setDeletingItem(item);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (deletingItem) {
+            deleteMutation.mutate(deletingItem.id);
+            setIsDeleteDialogOpen(false);
+            setDeletingItem(null);
         }
     };
 
@@ -186,17 +211,7 @@ export default function DesignationsPage() {
                                         />
                                     </div>
 
-                                    <div>
-                                        <Label>Status</Label>
-                                        <select
-                                            value={status}
-                                            onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
-                                            className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-                                        >
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                        </select>
-                                    </div>
+
 
                                     <div className="flex justify-end gap-3 pt-4">
                                         <Button type="button" variant="outline" onClick={handleCloseDialog}>
@@ -213,6 +228,35 @@ export default function DesignationsPage() {
                                 </form>
                             </DialogContent>
                         </Dialog>
+
+                        {/* Delete Confirmation Dialog */}
+                        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Delete Designation</DialogTitle>
+                                    <DialogDescription>
+                                        Are you sure you want to delete "{deletingItem?.Name}"? This action cannot be undone.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsDeleteDialogOpen(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                        onClick={confirmDelete}
+                                        disabled={deleteMutation.isPending}
+                                    >
+                                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
             </div>
@@ -225,9 +269,6 @@ export default function DesignationsPage() {
                             <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
                                 Name
                             </th>
-                            <th className="px-6 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                                Status
-                            </th>
                             <th className="px-6 py-3 text-right text-sm font-semibold uppercase tracking-wider">
                                 Actions
                             </th>
@@ -236,7 +277,7 @@ export default function DesignationsPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {isLoading ? (
                             <tr>
-                                <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={2} className="px-6 py-12 text-center text-gray-500">
                                     Loading...
                                 </td>
                             </tr>
@@ -244,17 +285,7 @@ export default function DesignationsPage() {
                             designations.map((item: Designation) => (
                                 <tr key={item.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'Active'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
-                                                }`}
-                                        >
-                                            {item.status}
-                                        </span>
+                                        <span className="text-sm font-medium text-gray-900">{item.Name}</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
@@ -269,7 +300,7 @@ export default function DesignationsPage() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleDelete(item.id)}
+                                                onClick={() => handleDelete(item)}
                                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -280,7 +311,7 @@ export default function DesignationsPage() {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={2} className="px-6 py-12 text-center text-gray-500">
                                     No designations found. Click "Add New" to create one.
                                 </td>
                             </tr>

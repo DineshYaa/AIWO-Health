@@ -55,6 +55,11 @@ const baseNavItems = [
     icon: ClipboardList,
   },
   {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+  {
     title: "Telemedicine",
     url: "/telemedicine",
     icon: Video,
@@ -84,6 +89,7 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
+
 ];
 
 const physicianNavItem = {
@@ -98,11 +104,7 @@ const adminNavItem = {
   icon: Settings,
 };
 
-const settingsNavItem = {
-  title: "Settings",
-  url: "/settings/specializations",
-  icon: Settings,
-};
+
 
 const rolesNavItem = {
   title: "Roles",
@@ -112,11 +114,12 @@ const rolesNavItem = {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const userRole = user?.role || "user";
+  console.log(userRole);
 
   const navItems = [
     ...baseNavItems,
     ...(userRole === 'physician' || userRole === 'admin' ? [physicianNavItem] : []),
-    ...(userRole === 'admin' ? [rolesNavItem, settingsNavItem, adminNavItem] : []),
+    // ...(userRole === 'admin' ? [rolesNavItem, settingsNavItem, adminNavItem] : []),
   ];
   const [location] = useLocation();
 
