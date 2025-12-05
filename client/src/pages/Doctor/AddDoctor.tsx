@@ -27,19 +27,15 @@ const doctorSchema = z.object({
   address2: z.string().optional(),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
+  country: z.string().min(2, "Country is required"),
   country_code: z.string().min(2, "Country code is required"),
   qualification: z.string().min(2, "Qualification is required"),
   license_no: z.string().min(2, "License number is required"),
   experience: z.string().min(1, "Experience is required"),
   about_me: z.string().min(10, "Please provide more information"),
-  inperson_consultation: z
-    .string()
-    .min(1, "In-person consultation fee is required"),
-  tele_consultation: z.string().min(1, "Tele-consultation fee is required"),
   doctor_commission: z.string().min(1, "Commission is required"),
   gender_type: z.string().min(1, "Gender is required"),
   status: z.string().min(1, "Status is required"),
-  doctor_type: z.string().min(1, "Doctor type is required"),
   // Hidden fields
   designation_id: z
     .string()
@@ -89,16 +85,14 @@ const AddDoctor = () => {
       address2: "",
       city: "",
       state: "",
+      country: "",
       country_code: "",
       qualification: "",
       license_no: "",
       gender_type: "",
       experience: "",
       about_me: "",
-      inperson_consultation: "",
-      tele_consultation: "",
       status: "",
-      doctor_type: "",
       doctor_commission: "",
     },
   });
@@ -418,29 +412,6 @@ const AddDoctor = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="doctor_type" className="text-gray-700">
-                    Doctor Type
-                  </Label>
-                  <Select
-                    onValueChange={(value) => setValue("doctor_type", value)}
-                    defaultValue="1"
-                  >
-                    <SelectTrigger className="border-gray-300 focus:ring-teal-500 focus:border-transparent">
-                      <SelectValue placeholder="Select doctor type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">General Practitioner</SelectItem>
-                      <SelectItem value="2">Specialist</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.doctor_type && (
-                    <p className="text-sm text-red-500">
-                      {errors.doctor_type.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="status" className="text-gray-700">
                     Status
                   </Label>
@@ -465,61 +436,12 @@ const AddDoctor = () => {
               </div>
             </div>
 
-            {/* Financials */}
+            {/* Commission */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
                 Financial Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="inperson_consultation"
-                    className="text-gray-700"
-                  >
-                    In-person Fee
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                      $
-                    </span>
-                    <Input
-                      id="inperson_consultation"
-                      type="number"
-                      {...register("inperson_consultation")}
-                      placeholder="0.00"
-                      className="pl-7 border-gray-300 focus:ring-teal-500 focus:border-transparent"
-                    />
-                  </div>
-                  {errors.inperson_consultation && (
-                    <p className="text-sm text-red-500">
-                      {errors.inperson_consultation.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tele_consultation" className="text-gray-700">
-                    Tele-consultation Fee
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                      $
-                    </span>
-                    <Input
-                      id="tele_consultation"
-                      type="number"
-                      {...register("tele_consultation")}
-                      placeholder="0.00"
-                      className="pl-7 border-gray-300 focus:ring-teal-500 focus:border-transparent"
-                    />
-                  </div>
-                  {errors.tele_consultation && (
-                    <p className="text-sm text-red-500">
-                      {errors.tele_consultation.message}
-                    </p>
-                  )}
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="doctor_commission" className="text-gray-700">
                     Commission (%)
@@ -610,6 +532,23 @@ const AddDoctor = () => {
                   {errors.state && (
                     <p className="text-sm text-red-500">
                       {errors.state.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="country" className="text-gray-700">
+                    Country
+                  </Label>
+                  <Input
+                    id="country"
+                    {...register("country")}
+                    placeholder="Enter country"
+                    className="border-gray-300 focus:ring-teal-500 focus:border-transparent"
+                  />
+                  {errors.country && (
+                    <p className="text-sm text-red-500">
+                      {errors.country.message}
                     </p>
                   )}
                 </div>
