@@ -93,8 +93,14 @@ const physicianNavItem = {
 };
 
 const adminNavItem = {
-  title: "Settings",
+  title: "Admin",
   url: "/admin",
+  icon: Settings,
+};
+
+const settingsNavItem = {
+  title: "Settings",
+  url: "/settings/specializations",
   icon: Settings,
 };
 
@@ -109,10 +115,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const navItems = [
     ...baseNavItems,
-    ...(userRole === "physician" || userRole === "admin"
-      ? [physicianNavItem]
-      : []),
-    ...(userRole === "admin" ? [rolesNavItem, adminNavItem] : []),
+    ...(userRole === 'physician' || userRole === 'admin' ? [physicianNavItem] : []),
+    ...(userRole === 'admin' ? [rolesNavItem, settingsNavItem, adminNavItem] : []),
   ];
   const [location] = useLocation();
 
@@ -164,11 +168,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
-                          : "hover-elevate"
-                      }`}
+                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
+                        : "hover-elevate"
+                        }`}
                     >
                       <Link
                         href={item.url}
