@@ -51,24 +51,35 @@ export default function LoginPage() {
       const { data } = responseData;
 
       // Store auth data in localStorage and query cache
-      if (data && data.user && data.token) {
+      if (data && data.token) {
+        // Build user object from response fields
+        const user = {
+          id: data.user_id,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          user_type: data.user_type,
+          role_base_id: data.role_base_id,
+          status: data.status,
+          contact: data.contact,
+        };
+
         setAuthData({
-          user: data.user,
+          user: user,
           token: data.token,
           refreshToken: data.refreshToken,
-          associatedData: data.associatedData,
         });
 
         toast({
           title: "Login Successful",
-          description: `Welcome back, ${data.user.first_name || "User"}!`,
+          description: `Welcome back, ${data.first_name || "User"}!`,
         });
 
         // Invalidate any existing auth queries
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
 
         // Redirect to dashboard
-        setLocation("/doctors");
+        setLocation("/");
       } else {
         throw new Error("Invalid response from server");
       }

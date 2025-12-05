@@ -68,6 +68,13 @@ function AuthenticatedLayout() {
               <Route path="/roles/add" component={AddRolePage} />
               <Route path="/roles/edit/:id" component={AddRolePage} />
               <Route path="/physician" component={PhysicianDashboard} />
+              <Route
+                path="/api/doctor-schedule"
+                component={DoctorSchedulePage}
+              />
+              <Route path="/doctors" component={DoctorList} />
+              <Route path="/doctors/add" component={AddDoctor} />
+              <Route path="/doctors/edit/:id" component={AddDoctor} />
               <Route path="/doctors">
                 {() => (
                   <ErrorBoundary>
@@ -75,6 +82,7 @@ function AuthenticatedLayout() {
                   </ErrorBoundary>
                 )}
               </Route>
+
               <Route path="/admin">
                 {() => (
                   <ErrorBoundary>

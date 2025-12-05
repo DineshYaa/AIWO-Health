@@ -8,15 +8,15 @@ export default defineConfig({
     react(),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
-      process.env.REPL_ID !== undefined
+    process.env.REPL_ID !== undefined
       ? [
-        await import("@replit/vite-plugin-cartographer").then((m) =>
-          m.cartographer(),
-        ),
-        await import("@replit/vite-plugin-dev-banner").then((m) =>
-          m.devBanner(),
-        ),
-      ]
+          await import("@replit/vite-plugin-cartographer").then((m) =>
+            m.cartographer()
+          ),
+          await import("@replit/vite-plugin-dev-banner").then((m) =>
+            m.devBanner()
+          ),
+        ]
       : []),
   ],
   resolve: {
@@ -35,8 +35,33 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     proxy: {
-      '/auth': {
-        target: 'http://192.168.0.197:7001',
+      "^/auth/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/doctor/doctors/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/user/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/employee/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/appointment/.*": {
+        target: "http://192.168.0.197:7001",
+        changeOrigin: true,
+        secure: false,
+      },
+      "^/billing/.*": {
+        target: "http://192.168.0.197:7001",
         changeOrigin: true,
         secure: false,
       },

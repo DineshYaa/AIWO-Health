@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { buildApiUrl } from "./apiConfig";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -31,7 +32,9 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
   }
 
-  if (globalAuthToken) {
+  // Skip adding token for /auth endpoints (login, register, etc.)
+  const isAuthEndpoint = url.includes("/auth");
+  if (globalAuthToken && !isAuthEndpoint) {
     headers["Authorization"] = `Bearer ${globalAuthToken}`;
   }
 
@@ -46,7 +49,9 @@ export async function apiRequest(
     fetchOptions.body = JSON.stringify(data);
   }
 
-  const res = await fetch(url, fetchOptions);
+  // Build full URL with base URL
+  const fullUrl = buildApiUrl(url);
+  const res = await fetch(fullUrl, fetchOptions);
 
   await throwIfResNotOk(res);
   return res;
@@ -60,11 +65,17 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const headers: HeadersInit = {};
 
-    if (globalAuthToken) {
+    // Build full URL with base URL
+    const endpoint = queryKey.join("/") as string;
+    const fullUrl = buildApiUrl(endpoint);
+
+    // Skip adding token for /auth endpoints
+    const isAuthEndpoint = fullUrl.includes("/auth");
+    if (globalAuthToken && !isAuthEndpoint) {
       headers["Authorization"] = `Bearer ${globalAuthToken}`;
     }
 
-    const res = await fetch(queryKey.join("/") as string, {
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers,
     });
