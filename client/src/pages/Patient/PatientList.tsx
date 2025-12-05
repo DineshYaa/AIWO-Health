@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
@@ -23,36 +23,35 @@ import {
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
-interface Doctor {
+interface Patient {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   contact: string;
-  specialization_name: string;
-  designation_name: string;
-  status: number;
+  gender_type: number;
+  patient_serial_no: string;
   created_at: string;
 }
 
-interface DoctorsResponse {
-  data: Doctor[];
+interface PatientsResponse {
+  data: Patient[];
   totalRecords: number;
   totalPages: number;
   currentPage: number;
   pagesize: number;
 }
 
-const fetchDoctors = async ({
+const fetchPatients = async ({
   queryKey,
 }: {
   queryKey: readonly unknown[];
-}): Promise<DoctorsResponse> => {
+}): Promise<PatientsResponse> => {
   const [_, page, pageSize] = queryKey;
 
   const response = await apiRequest(
     "GET",
-    `/doctor/doctors/GetAllDoctors?pageNo=${page}&pagesize=${pageSize}&pagination_required=true`
+    `/doctor/patients/GetAllPatients?pageNo=${page}&pagesize=${pageSize}&pagination_required=true`
   );
 
   if (!response.ok) {
@@ -63,7 +62,7 @@ const fetchDoctors = async ({
   return response.json();
 };
 
-const DoctorList: React.FC = () => {
+const PatientList: React.FC = () => {
   const [page, setPage] = React.useState(1);
   const [pageSize] = React.useState(10);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -71,17 +70,16 @@ const DoctorList: React.FC = () => {
   const { token } = useAuth();
 
   const {
-    data: doctorsResponse,
+    data: patientsResponse,
     isLoading,
     isError,
     error,
-  } = useQuery<DoctorsResponse, Error>({
-    queryKey: ["doctors", page, pageSize, searchTerm],
-    queryFn: ({ queryKey }) => fetchDoctors({ queryKey }),
+  } = useQuery<PatientsResponse, Error>({
+    queryKey: ["patients", page, pageSize, searchTerm],
+    queryFn: ({ queryKey }) => fetchPatients({ queryKey }),
     enabled: !!token,
-    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  } as const);
 
   const handlePreviousPage = () => {
     if (page > 1) {
@@ -90,15 +88,29 @@ const DoctorList: React.FC = () => {
   };
 
   const handleNextPage = () => {
-    if (doctorsResponse && page < doctorsResponse?.totalPages) {
+    if (patientsResponse && page < patientsResponse?.totalPages) {
       setPage((p) => p + 1);
     }
   };
 
+  const genderMap: { [key: number]: string } = {
+    1: "Male",
+    2: "Female",
+    3: "Other",
+  };
+
+  // const statusMap: { [key: string]: string } = {
+  //   "1": "Active",
+  //   "0": "Inactive",
+  // };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-teal-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading patients...</p>
+        </div>
       </div>
     );
   }
@@ -106,12 +118,16 @@ const DoctorList: React.FC = () => {
   if (isError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-red-500 bg-white p-8 rounded-xl shadow-lg">
-          Error: {error?.message}
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error?.message}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );
   }
+
+  const patients = patientsResponse?.data || [];
+  const totalPages = patientsResponse?.totalPages || 1;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
@@ -134,10 +150,10 @@ const DoctorList: React.FC = () => {
         </div>
         <div className="text-left mb-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Doctors Directory
+            Patient Management
           </h2>
           <p className="text-gray-600 text-sm">
-            Manage and view all registered doctors
+            Manage and view all registered patients
           </p>
         </div>
 
@@ -147,7 +163,7 @@ const DoctorList: React.FC = () => {
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search doctors..."
+                placeholder="Search patients..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -156,17 +172,17 @@ const DoctorList: React.FC = () => {
                 className="pl-10 border-gray-300 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
-            <Link href="/doctors/add">
+            <Link href="/patients/add">
               <Button className="bg-teal-500 hover:bg-teal-600 text-white shadow-md hover:shadow-lg transition-all">
                 <UserPlus className="mr-2 h-4 w-4" />
-                Add New Doctor
+                Add New Patient
               </Button>
             </Link>
           </div>
 
-          {!doctorsResponse?.data?.length ? (
+          {!patientsResponse?.data?.length ? (
             <div className="text-center py-12 text-muted-foreground">
-              No doctors found
+              No patients found
             </div>
           ) : (
             <>
@@ -175,7 +191,10 @@ const DoctorList: React.FC = () => {
                   <TableHeader className="bg-gray-50">
                     <TableRow>
                       <TableHead className="font-semibold text-gray-700">
-                        Name
+                        Serial No
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Patient Name
                       </TableHead>
                       <TableHead className="font-semibold text-gray-700">
                         Email
@@ -184,13 +203,7 @@ const DoctorList: React.FC = () => {
                         Contact
                       </TableHead>
                       <TableHead className="font-semibold text-gray-700">
-                        Specialization
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
-                        Designation
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
-                        Status
+                        Gender
                       </TableHead>
                       <TableHead className="font-semibold text-gray-700">
                         Joined Date
@@ -201,43 +214,33 @@ const DoctorList: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doctorsResponse.data.map((doctor: any) => (
+                    {patients.map((patient) => (
                       <TableRow
-                        key={doctor.id}
+                        key={patient.id}
                         className="hover:bg-gray-50/50 transition-colors"
                       >
                         <TableCell className="font-medium text-gray-900">
-                          {`${doctor.first_name} ${doctor.last_name}`}
+                          {patient.patient_serial_no}
+                        </TableCell>
+                        <TableCell className="font-medium text-gray-900">
+                          {patient.firstName} {patient.lastName}
                         </TableCell>
                         <TableCell className="text-gray-600">
-                          {doctor.email}
+                          {patient.email}
                         </TableCell>
                         <TableCell className="text-gray-600">
-                          {doctor.contact}
+                          {patient.contact}
                         </TableCell>
                         <TableCell className="text-gray-600">
-                          {doctor.specialization_name}
+                          {genderMap[patient.gender_type] ||
+                            patient.gender_type}
                         </TableCell>
                         <TableCell className="text-gray-600">
-                          {doctor.designation_name}
+                          {new Date(patient.created_at).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              doctor.status === 1
-                                ? "bg-teal-100 text-teal-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {doctor.status === 1 ? "Active" : "Inactive"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {new Date(doctor.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-start">
+                        <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <Link href={`/doctors/view/${doctor.id}`}>
+                            <Link href={`/patients/view/${patient.id}`}>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -246,7 +249,7 @@ const DoctorList: React.FC = () => {
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
-                            <Link href={`/doctors/edit/${doctor.id}`}>
+                            <Link href={`/patients/edit/${patient.id}`}>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -273,14 +276,14 @@ const DoctorList: React.FC = () => {
                   <span className="font-medium text-gray-900">
                     {Math.min(
                       page * pageSize,
-                      doctorsResponse?.totalRecords || 0
+                      patientsResponse?.totalRecords || 0
                     )}
                   </span>{" "}
                   of{" "}
                   <span className="font-medium text-gray-900">
-                    {doctorsResponse?.totalRecords || 0}
+                    {patientsResponse?.totalRecords || 0}
                   </span>{" "}
-                  doctors
+                  patients
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -293,15 +296,13 @@ const DoctorList: React.FC = () => {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm font-medium text-gray-700">
-                    Page {page} of {doctorsResponse?.totalPages || 1}
+                    Page {page} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
-                    disabled={
-                      !doctorsResponse || page >= doctorsResponse.totalPages
-                    }
+                    disabled={page >= totalPages}
                     className="hover:bg-gray-50 hover:text-teal-600"
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -316,4 +317,4 @@ const DoctorList: React.FC = () => {
   );
 };
 
-export default DoctorList;
+export default PatientList;
