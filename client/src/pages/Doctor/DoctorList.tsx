@@ -42,7 +42,6 @@ interface DoctorsResponse {
   currentPage: number;
   pagesize: number;
 }
-const BaseURL = "http://192.168.0.197:7001";
 
 const fetchDoctors = async ({
   queryKey,
@@ -50,18 +49,10 @@ const fetchDoctors = async ({
   queryKey: readonly unknown[];
 }): Promise<DoctorsResponse> => {
   const [_, page, pageSize] = queryKey;
-  const token = localStorage.getItem("token");
 
   const response = await apiRequest(
     "GET",
-    `${BaseURL}/api/doctors?page=${page}&pageSize=${pageSize}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    }
+    `/doctor/doctors/GetAllDoctors?pageNo=${page}&pagesize=${pageSize}&pagination_required=true`
   );
 
   if (!response.ok) {
