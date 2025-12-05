@@ -21,6 +21,7 @@ import {
   Edit,
 } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Doctor {
   id: string;
@@ -51,7 +52,8 @@ const fetchDoctors = async ({
   const [_, page, pageSize] = queryKey;
   const token = localStorage.getItem("token");
 
-  const response = await fetch(
+  const response = await apiRequest(
+    "GET",
     `${BaseURL}/api/doctors?page=${page}&pageSize=${pageSize}`,
     {
       headers: {
