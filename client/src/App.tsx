@@ -26,12 +26,13 @@ import PhysicianDashboard from "@/pages/PhysicianDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AddDoctor from "./pages/Doctor/AddDoctor";
 import DoctorList from "./pages/Doctor/DoctorList";
+import ViewDoctor from "./pages/Doctor/ViewDoctor";
 import LoginPage from "./pages/Login";
 import DoctorSchedulePage from "./pages/doctorSchedule";
 
 function AuthenticatedLayout() {
   const { user } = useAuth();
-
+  console.log("user : ", user);
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "4rem",
@@ -51,7 +52,7 @@ function AuthenticatedLayout() {
           </header>
           <main className="flex-1 overflow-auto">
             <Switch>
-              <Route path="/" component={Dashboard} />
+              <Route path="/dashboard" component={Dashboard} />
               <Route path="/biomarkers" component={Biomarkers} />
               <Route path="/protocols" component={Protocols} />
               <Route path="/booking" component={Booking} />
@@ -61,6 +62,8 @@ function AuthenticatedLayout() {
               <Route path="/chat" component={Chat} />
               <Route path="/profile" component={Profile} />
               <Route path="/physician" component={PhysicianDashboard} />
+              <Route path="/doctors" component={DoctorList} />
+
               <Route path="/admin">
                 {() => (
                   <ErrorBoundary>
@@ -69,60 +72,6 @@ function AuthenticatedLayout() {
                 )}
               </Route>
               <Route component={NotFound} />
-            </Switch>
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-}
-
-function AuthLayout() {
-  const { user } = useAuth();
-
-  console.log('User in AuthLayout:', user);
-  
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "4rem",
-  };
-
-  return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        {/* <AppSidebar user={user} /> */}
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between h-14 px-4 border-b border-border shrink-0 bg-background/95 backdrop-blur-sm sticky top-0 z-50">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <div className="flex items-center gap-2">
-              <NotificationCenter />
-              <ThemeToggle />
-            </div>
-          </header>
-          <main className="flex-1 overflow-auto">
-            <Switch>
-              {/* <Route path="/" component={Dashboard} />
-              <Route path="/biomarkers" component={Biomarkers} />
-              <Route path="/protocols" component={Protocols} />
-              <Route path="/booking" component={Booking} />
-              <Route path="/telemedicine" component={Telemedicine} />
-              <Route path="/wearables" component={WearableAnalytics} />
-              <Route path="/community" component={Community} />
-              <Route path="/chat" component={Chat} />
-              <Route path="/profile" component={Profile} />
-              <Route path="/physician" component={PhysicianDashboard} /> */}
-              {/* <Route path="/api/login" component={Login} /> */}
-              <Route path="/doctors/add" component={AddDoctor} />
-              <Route path="/admin">
-                {() => (
-                  <ErrorBoundary>
-                    <AdminDashboard />
-                  </ErrorBoundary>
-                )}
-              </Route>
-              <Route component={NotFound} />
-
-              <Route path="/api/login" component={LoginPage} />
             </Switch>
           </main>
         </div>
@@ -136,7 +85,8 @@ function Router() {
 
   const [location] = useLocation();
   usePageTracking();
-
+  console.log("isAuthenticated ", isAuthenticated);
+  console.log("isLoading ", isLoading);
   // usePageTracking();
   if (isLoading) {
     return (
@@ -151,27 +101,34 @@ function Router() {
 
   if (!isAuthenticated) {
     // return location !== "/" ? <AuthLayout /> : <Landing />;
+    // Allow unauthenticated access to certain doctor routes
+    if (location.startsWith("/doctors/view/")) {
+      return <ViewDoctor />;
+    }
+    if (location.startsWith("/doctors/edit/")) {
+      return <AddDoctor />;
+    }
+
     switch (location) {
-      case '/api/login':
-        return <LoginPage />;        
+      case "/api/login":
+        return <LoginPage />;
       case "/doctors/add":
         return <AddDoctor />;
       case "/doctors":
         return <DoctorList />;
-      case '/api/doctor-schedule':
+      case "/api/doctor-schedule":
         return <DoctorSchedulePage />;
       default:
         return <Landing />;
-    // switch (location) {
-    //   case '/api/login':
-    //     return <LoginPage />;
-    //   case '/api/doctor-schedule':
-    //     return <DoctorSchedulePage />;
-    //   default:
-    //     return <Landing />;
+      // switch (location) {
+      //   case '/api/login':
+      //     return <LoginPage />;
+      //   case '/api/doctor-schedule':
+      //     return <DoctorSchedulePage />;
+      //   default:
+      //     return <Landing />;
     }
   }
-
 
   return <AuthenticatedLayout />;
 }
