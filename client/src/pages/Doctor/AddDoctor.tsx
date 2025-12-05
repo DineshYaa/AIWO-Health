@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Link, useLocation, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
 
 const doctorSchema = z.object({
   first_name: z.string().min(2, "First name is required"),
@@ -55,8 +56,6 @@ const doctorSchema = z.object({
 });
 
 type DoctorFormData = z.infer<typeof doctorSchema>;
-
-const BaseURL = "http://192.168.0.197:7001";
 
 const AddDoctor = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -104,21 +103,17 @@ const AddDoctor = () => {
 
       try {
         setIsFetching(true);
-        const response = await fetch(
-          `${BaseURL}/doctor/doctors/GetDoctorById/${doctorId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
+        const response = await apiRequest(
+          "GET",
+          `/doctor/doctors/GetDoctorById/${doctorId}`
         );
 
         if (!response.ok) {
           throw new Error("Failed to fetch doctor data");
         }
 
-        const doctorData = await response.json();
+        const responseData = await response.json();
+        const doctorData = responseData.data;
 
         // Populate form with fetched data
         Object.keys(doctorData).forEach((key) => {
@@ -148,25 +143,18 @@ const AddDoctor = () => {
 
     fetchDoctorData();
   }, [isEditMode, doctorId, token, setValue]);
-
+  console.log("errors ", errors);
   const onSubmit = async (data: DoctorFormData) => {
     try {
       setIsLoading(true);
 
       const url = isEditMode
-        ? `${BaseURL}/doctor/doctors/UpdateDoctor/${doctorId}`
-        : `${BaseURL}/doctor/doctors/InsertDoctor`;
+        ? `/doctor/doctors/UpdateDoctor/${doctorId}`
+        : `/doctor/doctors/InsertDoctor`;
 
       const method = isEditMode ? "PUT" : "POST";
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest(method, url, data);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

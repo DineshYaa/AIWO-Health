@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Link, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
 
 interface DoctorData {
   id: string;
@@ -26,23 +27,33 @@ interface DoctorData {
   address2?: string;
   city: string;
   state: string;
+  country?: string;
   country_code: string;
   qualification: string;
+  designation_id: string;
+  profile_url?: string;
+  specialization_id: string;
   license_no: string;
-  experience: string;
-  about_me: string;
-  inperson_consultation: string;
-  tele_consultation: string;
-  doctor_commission: string;
+  user_id: string;
+  role_id: string;
   gender_type: string;
-  status: string;
-  doctor_type: string;
-  specialization_name?: string;
-  designation_name?: string;
+  experience: number;
+  about_me: string;
+  doctor_serial_no: string;
+  status: number;
+  doctor_commission: number;
   created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  Designation?: { Name: string };
+  Specialization?: { Name: string };
+  user_first_name?: string;
+  user_last_name?: string;
+  user_email?: string;
+  user_contact?: string;
+  user_user_type?: number;
+  user_status?: number;
 }
-
-const BaseURL = "http://192.168.0.197:7001";
 
 const ViewDoctor = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -58,22 +69,18 @@ const ViewDoctor = () => {
 
       try {
         setIsLoading(true);
-        const response = await fetch(
-          `${BaseURL}/doctor/doctors/GetDoctorById/${doctorId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
+        const response = await apiRequest(
+          "GET",
+          `/doctor/doctors/GetDoctorById/${doctorId}`
         );
 
         if (!response.ok) {
           throw new Error("Failed to fetch doctor data");
         }
 
-        const data = await response.json();
-        setDoctorData(data);
+        const responseData = await response.json();
+        // Extract data from response.data
+        setDoctorData(responseData.data);
       } catch (error) {
         console.error("Error fetching doctor:", error);
         toast({
@@ -193,19 +200,19 @@ const ViewDoctor = () => {
                     Dr. {doctorData.first_name} {doctorData.last_name}
                   </h3>
                   <p className="text-gray-600">
-                    {doctorData.specialization_name || "Specialist"} •{" "}
-                    {doctorData.designation_name || "Doctor"}
+                    {doctorData.Specialization?.Name || "Specialist"} •{" "}
+                    {doctorData.Designation?.Name || "Doctor"}
                   </p>
                 </div>
               </div>
               <span
                 className={`px-4 py-2 rounded-full text-sm font-medium ${
-                  doctorData.status === "1"
+                  doctorData.status === 1
                     ? "bg-teal-100 text-teal-800"
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {statusMap[doctorData.status] || "Unknown"}
+                {statusMap[String(doctorData.status)] || "Unknown"}
               </span>
             </div>
           </div>
@@ -281,12 +288,6 @@ const ViewDoctor = () => {
                   {doctorData.experience} years
                 </p>
               </div>
-              <div>
-                <Label className="text-gray-500 text-sm">Doctor Type</Label>
-                <p className="text-gray-900 font-medium mt-1">
-                  {doctorTypeMap[doctorData.doctor_type] || "Not specified"}
-                </p>
-              </div>
             </div>
           </div>
 
@@ -297,22 +298,6 @@ const ViewDoctor = () => {
               Financial Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <Label className="text-gray-500 text-sm">
-                  In-person Consultation Fee
-                </Label>
-                <p className="text-gray-900 font-medium mt-1">
-                  ${doctorData.inperson_consultation}
-                </p>
-              </div>
-              <div>
-                <Label className="text-gray-500 text-sm">
-                  Tele-consultation Fee
-                </Label>
-                <p className="text-gray-900 font-medium mt-1">
-                  ${doctorData.tele_consultation}
-                </p>
-              </div>
               <div>
                 <Label className="text-gray-500 text-sm">Commission</Label>
                 <p className="text-gray-900 font-medium mt-1">
