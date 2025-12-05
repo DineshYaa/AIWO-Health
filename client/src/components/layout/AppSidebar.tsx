@@ -50,6 +50,11 @@ const baseNavItems = [
     icon: ClipboardList,
   },
   {
+    title: "Doctors",
+    url: "/doctors",
+    icon: ClipboardList,
+  },
+  {
     title: "Telemedicine",
     url: "/telemedicine",
     icon: Video,
@@ -106,7 +111,7 @@ const rolesNavItem = {
 };
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  const userRole = user?.role || 'user';
+  const userRole = user?.role || "user";
 
   const navItems = [
     ...baseNavItems,
@@ -119,7 +124,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
     if (!user) return "U";
     const first = user.firstName?.charAt(0) || "";
     const last = user.lastName?.charAt(0) || "";
-    return (first + last).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U";
+    return (
+      (first + last).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"
+    );
   };
 
   const getDisplayName = (user: any | null | undefined) => {
@@ -139,7 +146,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <Heart className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-sidebar-foreground tracking-tight">AIWO</h1>
+              <h1 className="text-lg font-semibold text-sidebar-foreground tracking-tight">
+                AIWO
+              </h1>
               <p className="text-xs text-muted-foreground">Healthcation</p>
             </div>
           </div>
@@ -151,7 +160,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                const isActive = location === item.url ||
+                const isActive =
+                  location === item.url ||
                   (item.url !== "/" && location.startsWith(item.url));
 
                 return (
@@ -163,7 +173,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                         : "hover-elevate"
                         }`}
                     >
-                      <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <Link
+                        href={item.url}
+                        data-testid={`link-nav-${item.title
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")}`}
+                      >
                         <item.icon className="w-5 h-5" />
                         <span className="font-medium">{item.title}</span>
                       </Link>
@@ -189,24 +204,39 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate" data-testid="text-user-name">
+            <p
+              className="text-sm font-medium text-sidebar-foreground truncate"
+              data-testid="text-user-name"
+            >
               {getDisplayName(user)}
             </p>
             <div className="flex items-center gap-1.5 mt-0.5">
-              {userRole === 'physician' && (
-                <Badge variant="outline" className="text-xs" data-testid="badge-role">
+              {userRole === "physician" && (
+                <Badge
+                  variant="outline"
+                  className="text-xs"
+                  data-testid="badge-role"
+                >
                   <Stethoscope className="w-3 h-3 mr-1" />
                   Physician
                 </Badge>
               )}
-              {userRole === 'admin' && (
-                <Badge variant="outline" className="text-xs" data-testid="badge-role">
+              {userRole === "admin" && (
+                <Badge
+                  variant="outline"
+                  className="text-xs"
+                  data-testid="badge-role"
+                >
                   <Shield className="w-3 h-3 mr-1" />
                   Admin
                 </Badge>
               )}
-              {userRole === 'user' && (
-                <Badge variant="secondary" className="text-xs" data-testid="badge-health-score">
+              {userRole === "user" && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs"
+                  data-testid="badge-health-score"
+                >
                   Health Score: 85
                 </Badge>
               )}

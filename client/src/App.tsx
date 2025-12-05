@@ -30,6 +30,8 @@ import RolesPage from "./pages/Roles/Roles";
 import DoctorSchedulePage from "./pages/doctorSchedule";
 import RolesListPage from "./pages/Roles/RolesList";
 import AddRolePage from "./pages/Roles/AddRole";
+import DoctorList from "./pages/Doctor/DoctorList";
+import AddDoctor from "./pages/Doctor/AddDoctor";
 
 function AuthenticatedLayout() {
   const { user } = useAuth();
@@ -66,6 +68,13 @@ function AuthenticatedLayout() {
               <Route path="/roles/add" component={AddRolePage} />
               <Route path="/roles/edit/:id" component={AddRolePage} />
               <Route path="/physician" component={PhysicianDashboard} />
+              <Route path="/doctors">
+                {() => (
+                  <ErrorBoundary>
+                    <DoctorList />
+                  </ErrorBoundary>
+                )}
+              </Route>
               <Route path="/admin">
                 {() => (
                   <ErrorBoundary>
@@ -103,19 +112,24 @@ function Router() {
 
   if (!isAuthenticated) {
     switch (location) {
-      case '/api/login':
+      case "/api/login":
         return <LoginPage />;
-      case '/forgot-password':
+      case "/forgot-password":
         return <ForgotPasswordPage />;
-      case '/api/doctor-schedule':
+      case "/api/doctor-schedule":
         return <DoctorSchedulePage />;
-      case '/roles':
+      case "/doctors":
+        return <DoctorList />;
+      case "/doctors/add":
+        return <AddDoctor />;
+      case "/doctors/edit/:id":
+        return <AddDoctor />;
+      case "/roles":
         return <RolesListPage />;
       default:
         return <Landing />;
     }
   }
-
 
   return <AuthenticatedLayout />;
 }
