@@ -27,10 +27,10 @@ import {
   Video,
   Users,
 } from "lucide-react";
-import type { User as UserType } from "@shared/schema";
+// import type { User as UserType } from "@shared/schema";
 
 interface AppSidebarProps {
-  user: UserType | null | undefined;
+  user: any | null | undefined;
 }
 
 const baseNavItems = [
@@ -109,14 +109,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ];
   const [location] = useLocation();
 
-  const getInitials = (user: UserType | null | undefined) => {
+  const getInitials = (user: any | null | undefined) => {
     if (!user) return "U";
     const first = user.firstName?.charAt(0) || "";
     const last = user.lastName?.charAt(0) || "";
     return (first + last).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U";
   };
 
-  const getDisplayName = (user: UserType | null | undefined) => {
+  const getDisplayName = (user: any | null | undefined) => {
     if (!user) return "User";
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`;

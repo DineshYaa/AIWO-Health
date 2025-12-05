@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useMutation } from '@tanstack/react-query';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { setAuthData } from '@/hooks/useAuth';
+import React, { useState } from "react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { setAuthData } from "@/hooks/useAuth";
 
 const loginSchema = z.object({
-    email: z.string().email('Please enter a valid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     rememberMe: z.boolean().default(false),
 });
 
@@ -29,45 +29,58 @@ export default function LoginPage() {
     } = useForm({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            email: '',
-            password: '',
+            email: "",
+            password: "",
             rememberMe: false,
         },
     });
 
     const loginMutation = useMutation({
         mutationFn: async (data: { email: string; password: string }) => {
-            return await apiRequest('POST', '/auth/login', {
-                email: data.email,
-                password: data.password,
-            });
+            const response = await apiRequest(
+                "POST",
+                "/auth/login",
+                {
+                    email: data.email,
+                    password: data.password,
+                }
+            );
+            // Parse the JSON response
+            return response.json();
         },
-        onSuccess: (response: any) => {
-            console.log('Login Success ✅', response);
+        onSuccess: (responseData: any) => {
+            console.log("Login Success ✅", responseData);
 
             // Store auth data in localStorage and query cache
-            if (response.data && response.data.user && response.data.token) {
+            if (responseData && responseData.user && responseData.token) {
                 setAuthData({
-                    user: response.data.user,
-                    token: response.data.token,
-                    expiresIn: response.data.expiresIn,
+                    user: responseData.user,
+                    token: responseData.token,
+                    expiresIn: responseData.expiresIn,
                 });
+
+                toast({
+                    title: "Login Successful",
+                    description: `Welcome back, ${responseData.user.first_name || "User"
+                        }!`,
+                });
+
+                // Invalidate any existing auth queries
+                queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+                // Redirect to dashboard
+                setLocation("/");
+            } else {
+                throw new Error("Invalid response from server");
             }
-
-            toast({
-                title: 'Login Successful',
-                description: `Welcome back, ${response.data?.user?.first_name || 'User'}!`,
-            });
-
-            // Redirect to dashboard
-            setLocation('/admin');
         },
         onError: (error: Error) => {
-            console.error('Login Error ❌', error);
+            console.error("Login Error ❌", error);
             toast({
-                title: 'Login Failed',
-                description: error.message || 'Invalid email or password. Please try again.',
-                variant: 'destructive',
+                title: "Login Failed",
+                description:
+                    error.message || "Invalid email or password. Please try again.",
+                variant: "destructive",
             });
         },
     });
@@ -82,7 +95,6 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <div className="flex-1 flex">
-
                 {/* LEFT HERO */}
                 <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
                     <div
@@ -99,11 +111,13 @@ export default function LoginPage() {
                                 The Future of Longevity
                             </p>
                             <h1 className="text-5xl font-bold mb-6 leading-tight">
-                                Transform Your Health.<br />
+                                Transform Your Health.
+                                <br />
                                 Extend Your Life.
                             </h1>
                             <p className="text-lg leading-relaxed opacity-90">
-                                Experience precision health optimization with AI-powered wellness.
+                                Experience precision health optimization with AI-powered
+                                wellness.
                             </p>
                         </div>
                     </div>
@@ -113,27 +127,26 @@ export default function LoginPage() {
                 <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 bg-white">
                     <div className="max-w-md w-full">
                         <div className="text-center mb-10">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                Welcome Back
+                            </h2>
                             <p className="text-gray-600">Sign in to continue</p>
                         </div>
 
                         {/* ✅ Important: wrap with form */}
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
                             {/* EMAIL */}
                             <div>
                                 <Label>Email Address</Label>
                                 <Input
-                                    {...register('email')}
+                                    {...register("email")}
                                     type="email"
                                     placeholder="you@example.com"
-                                    className={`w-full px-4 py-3 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'
+                                    className={`w-full px-4 py-3 border rounded-lg ${errors.email ? "border-red-500" : "border-gray-300"
                                         }`}
                                 />
                                 {errors.email && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.email.message}
-                                    </p>
+                                    <p className="text-sm text-red-600">{errors.email.message}</p>
                                 )}
                             </div>
 
@@ -142,10 +155,10 @@ export default function LoginPage() {
                                 <Label>Password</Label>
                                 <div className="relative">
                                     <Input
-                                        {...register('password')}
-                                        type={showPassword ? 'text' : 'password'}
+                                        {...register("password")}
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="Enter password"
-                                        className={`w-full px-4 py-3 border rounded-lg pr-12 ${errors.password ? 'border-red-500' : 'border-gray-300'
+                                        className={`w-full px-4 py-3 border rounded-lg pr-12 ${errors.password ? "border-red-500" : "border-gray-300"
                                             }`}
                                     />
                                     <button
@@ -166,7 +179,7 @@ export default function LoginPage() {
                             {/* REMEMBER ME */}
                             <div className="flex justify-between items-center">
                                 <Label className="flex items-center">
-                                    <Input type="checkbox" {...register('rememberMe')} />
+                                    <Input type="checkbox" {...register("rememberMe")} />
                                     <span className="ml-1">Remember me</span>
                                 </Label>
                                 <button
@@ -190,14 +203,12 @@ export default function LoginPage() {
                                         Signing in...
                                     </>
                                 ) : (
-                                    'Sign In'
+                                    "Sign In"
                                 )}
                             </button>
-
                         </form>
                     </div>
                 </div>
-
             </div>
         </div>
     );
