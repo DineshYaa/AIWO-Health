@@ -58,6 +58,8 @@ export function useAuth() {
     staleTime: Infinity, // Don't refetch automatically
   });
 
+  console.log("authData : ",authData)
+
   const logout = useMutation({
     mutationFn: async () => {
       // Clear localStorage
