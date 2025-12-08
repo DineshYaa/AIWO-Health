@@ -68,7 +68,13 @@ const DoctorList: React.FC = () => {
   const [pageSize] = React.useState(10);
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+
+  // Get doctors permissions
+  const doctorsPermissions = user?.permissions?.doctors;
+  const canAddDoctor = doctorsPermissions?.add || false;
+  const canViewDoctor = doctorsPermissions?.view || false;
+  const canEditDoctor = doctorsPermissions?.edit || false;
 
   const {
     data: doctorsResponse,
@@ -156,12 +162,14 @@ const DoctorList: React.FC = () => {
                 className="pl-10 border-gray-300 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
-            <Link href="/doctors/add">
-              <Button className="bg-teal-500 hover:bg-teal-600 text-white shadow-md hover:shadow-lg transition-all">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add New Doctor
-              </Button>
-            </Link>
+            {canAddDoctor && (
+              <Link href="/doctors/add">
+                <Button className="bg-teal-500 hover:bg-teal-600 text-white shadow-md hover:shadow-lg transition-all">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add New Doctor
+                </Button>
+              </Link>
+            )}
           </div>
 
           {!doctorsResponse?.data?.length ? (
@@ -223,11 +231,10 @@ const DoctorList: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              doctor.status === 1
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${doctor.status === 1
                                 ? "bg-teal-100 text-teal-800"
                                 : "bg-red-100 text-red-800"
-                            }`}
+                              }`}
                           >
                             {doctor.status === 1 ? "Active" : "Inactive"}
                           </span>
@@ -237,24 +244,28 @@ const DoctorList: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-start">
                           <div className="flex items-center justify-center gap-2">
-                            <Link href={`/doctors/view/${doctor.id}`}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hover:bg-teal-50 hover:text-teal-600"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Link href={`/doctors/edit/${doctor.id}`}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hover:bg-teal-50 hover:text-teal-600"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </Link>
+                            {canViewDoctor && (
+                              <Link href={`/doctors/view/${doctor.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hover:bg-teal-50 hover:text-teal-600"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            )}
+                            {canEditDoctor && (
+                              <Link href={`/doctors/edit/${doctor.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hover:bg-teal-50 hover:text-teal-600"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
