@@ -60,6 +60,11 @@ const baseNavItems = [
     icon: Users,
   },
   {
+    title: "TeamMembers",
+    url: "/teamMembers",
+    icon: Users,
+  },
+  {
     title: "Telemedicine",
     url: "/telemedicine",
     icon: Video,
@@ -89,13 +94,16 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
-  // {
-  //   title: "Settings",
-  //   url: "/settings",
-  //   icon: Settings,
-  // },
-
-
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+  {
+    title: "Schedule",
+    url: "/schedules",
+    icon: Calendar,
+  },
 ];
 
 const physicianNavItem = {
@@ -124,7 +132,7 @@ const adminNavItems = [
 ];
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  console.log(user);
+  // console.log(user);
   const userRole = user?.role || "user";
   const isAdmin = user?.user_type == 1; // user_type 1 = admin
   console.log('userRole:', userRole, 'isAdmin:', isAdmin);
