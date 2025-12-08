@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2, Plus, Edit } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { convertTo12Hour } from "@/lib/utils";
 
 interface Schedule {
   id: string;
@@ -193,10 +194,10 @@ const ScheduleList: React.FC = () => {
                             schedule.week_day_id}
                         </TableCell>
                         <TableCell className="text-gray-600">
-                          {schedule.start_time}
+                          {convertTo12Hour(schedule.start_time)}
                         </TableCell>
                         <TableCell className="text-gray-600">
-                          {schedule.end_time}
+                          {convertTo12Hour(schedule.end_time)}
                         </TableCell>
                         <TableCell className="text-gray-600">
                           {schedule.interval}

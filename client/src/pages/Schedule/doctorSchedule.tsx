@@ -8,11 +8,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation, useRoute, Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 
 const scheduleSchema = z.object({
-  doctor_id: z.string().min(1, "Doctor ID is required"),
+  doctor_id: z.string().min(1, "Doctor is required"),
   week_day_id: z.string().min(1, "Week day is required"),
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
@@ -20,6 +20,31 @@ const scheduleSchema = z.object({
 });
 
 type ScheduleFormData = z.infer<typeof scheduleSchema>;
+
+interface Doctor {
+  id: string;
+  first_name: string;
+  last_name: string;
+  doctor_serial_no: string;
+}
+
+interface DoctorsResponse {
+  data: Doctor[];
+  totalRecords: number;
+}
+
+const fetchDoctors = async (): Promise<DoctorsResponse> => {
+  const response = await apiRequest(
+    "GET",
+    `/doctor/doctors/GetAllDoctors?pageNo=1&pagesize=1000&pagination_required=true`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch doctors");
+  }
+
+  return response.json();
+};
 
 export default function DoctorSchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +55,12 @@ export default function DoctorSchedulePage() {
 
   const isEditMode = match && params?.action === "edit" && params?.id;
   const scheduleId = params?.id;
+
+  const { data: doctorsResponse, isLoading: isLoadingDoctors } =
+    useQuery<DoctorsResponse>({
+      queryKey: ["doctors-list"],
+      queryFn: fetchDoctors,
+    });
 
   const {
     register,
@@ -156,12 +187,12 @@ export default function DoctorSchedulePage() {
     }
   };
 
-  if (isFetching) {
+  if (isFetching || isLoadingDoctors) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-teal-500 mx-auto mb-4" />
-          <p className="text-gray-600">Loading schedule data...</p>
+          <p className="text-gray-600">Loading data...</p>
         </div>
       </div>
     );
@@ -207,20 +238,26 @@ export default function DoctorSchedulePage() {
 
         <div className="bg-white rounded-xl shadow-lg p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Doctor ID Input */}
+            {/* Doctor Selection */}
             <div>
               <Label className="block text-sm font-medium text-gray-700 mb-2">
                 <div className="flex items-center gap-2">
                   <User size={16} />
-                  Doctor ID
+                  Doctor
                 </div>
               </Label>
-              <Input
-                type="text"
+              <select
                 {...register("doctor_id")}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition"
-                placeholder="e.g., 0b2feb8f-230f-4e57-9b1f-cdd692fd86e8"
-              />
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition bg-white"
+              >
+                <option value="">Select a doctor</option>
+                {doctorsResponse?.data?.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.first_name} {doctor.last_name} -{" "}
+                    {doctor.doctor_serial_no}
+                  </option>
+                ))}
+              </select>
               {errors.doctor_id && (
                 <p className="text-sm text-red-500 mt-1">
                   {errors.doctor_id.message}
