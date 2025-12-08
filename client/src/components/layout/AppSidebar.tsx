@@ -94,14 +94,19 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   url: "/settings",
+  //   icon: Settings,
+  // },
   {
     title: "Schedule",
     url: "/schedules",
+    icon: Calendar,
+  },
+  {
+    title: "Appointments",
+    url: "/appointments",
     icon: Calendar,
   },
 ];

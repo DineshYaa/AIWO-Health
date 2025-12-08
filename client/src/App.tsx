@@ -42,6 +42,8 @@ import ViewPatient from "./pages/Patient/ViewPatient";
 
 import TeamMemberView from "./pages/teammember/teamMember.View";
 import TeamMemberForm from "./pages/teammember/teamMember.Form";
+import AppointmentList from "./pages/Appointment/AppointmentList";
+import AddAppointment from "./pages/Appointment/AddAppointment";
 function AuthenticatedLayout() {
   const { user } = useAuth();
 
@@ -104,6 +106,10 @@ function AuthenticatedLayout() {
               <Route path="/patients/add" component={AddPatient} />
               <Route path="/patients/edit/:id" component={AddPatient} />
               <Route path="/patients/view/:id" component={ViewPatient} />
+
+              <Route path="/appointments" component={AppointmentList} />
+              <Route path="/appointments/add" component={AddAppointment} />
+              <Route path="/appointments/edit/:id" component={AddAppointment} />
 
               <Route path="/settings" component={SettingsPage} />
 
