@@ -62,6 +62,15 @@ export default function LoginPage() {
                     role_base_id: data.role_base_id,
                     status: data.status,
                     contact: data.contact,
+                    role_name: data.role_name,
+                    permissions: data.permissions,
+                    doctor_id: data.doctor_id,
+                    patient_id: data.patient_id,
+                    patient_name: data.patient_name,
+                    doctor_name: data.doctor_name,
+                    staff_id: data.staff_id,
+                    staff_name: data.staff_name,
+                    staff: data.staff,
                 };
 
                 setAuthData({
@@ -115,7 +124,7 @@ export default function LoginPage() {
                         }}
                     ></div>
                     <div className="absolute inset-0 bg-gradient-to-br from-teal-900/80 via-teal-800/70 to-cyan-900/80"></div>
-                    <div className="relative z-10 flex flex-col justify-center items-center text-white px-12">
+                    <div className="relative z-10 flex flex-col justify-center items-center text-white px-20">
                         <div className="max-w-lg text-center">
                             <p className="text-sm font-semibold mb-4 tracking-widest uppercase opacity-90">
                                 The Future of Longevity
@@ -188,10 +197,10 @@ export default function LoginPage() {
 
                             {/* REMEMBER ME */}
                             <div className="flex justify-between items-center">
-                                <Label className="flex items-center">
+                                {/* <Label className="flex items-center">
                                     <Input type="checkbox" {...register("rememberMe")} />
                                     <span className="ml-1">Remember me</span>
-                                </Label>
+                                </Label> */}
                                 <button
                                     type="button"
                                     onClick={() => setLocation("/forgot-password")}

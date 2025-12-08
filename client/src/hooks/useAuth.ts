@@ -2,6 +2,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, setGlobalAuthToken } from "@/lib/queryClient";
 import { useEffect } from "react";
 
+// Module permissions structure
+export interface ModulePermissions {
+  add: boolean;
+  edit: boolean;
+  view: boolean;
+  delete: boolean;
+  noaccess: boolean;
+  allaccess: boolean;
+}
+
 // User type based on the login response
 export interface User {
   id: string;
@@ -12,6 +22,15 @@ export interface User {
   role_base_id: string | null;
   status: number;
   contact?: string;
+  role_name?: string;
+  permissions?: Record<string, ModulePermissions>;
+  doctor_id?: string;
+  patient_id?: string;
+  patient_name?: string;
+  doctor_name?: string;
+  staff_id?: string;
+  staff_name?: string;
+  staff?: any;
 }
 
 export interface DoctorData {

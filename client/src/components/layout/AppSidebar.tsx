@@ -135,12 +135,45 @@ export function AppSidebar({ user }: AppSidebarProps) {
   // console.log(user);
   const userRole = user?.role || "user";
   const isAdmin = user?.user_type == 1; // user_type 1 = admin
-  // console.log("userRole:", userRole, "isAdmin:", isAdmin);
+  console.log('userRole:', userRole, 'isAdmin:', isAdmin);
+  console.log('permissions:', user?.permissions);
+
+  // Helper function to check if user has access to a module
+  const hasAccess = (moduleName: string): boolean => {
+    if (!user?.permissions) return true; // If no permissions defined, show all
+    const permission = user.permissions[moduleName.toLowerCase()];
+    if (!permission) return true; // If module not in permissions, show it
+    return !permission.noaccess; // Hide if noaccess is true
+  };
+
+  // Filter base nav items based on permissions
+  const filteredBaseNavItems = baseNavItems.filter(item => {
+    // Map menu titles to permission module names
+    const permissionMap: Record<string, string> = {
+      'Doctors': 'doctors',
+      'Patients': 'patients',
+      'Settings': 'settings',
+    };
+
+    const moduleName = permissionMap[item.title];
+    if (moduleName) {
+      return hasAccess(moduleName);
+    }
+    return true; // Show items that don't have permission mapping
+  });
+
+  // Filter admin nav items based on permissions
+  const filteredAdminNavItems = adminNavItems.filter(item => {
+    if (item.title === 'Settings') {
+      return hasAccess('settings');
+    }
+    return true; // Show other admin items (Roles, Admin)
+  });
 
   const navItems = [
-    ...baseNavItems,
-    ...(userRole === "physician" || isAdmin ? [physicianNavItem] : []),
-    ...(isAdmin ? adminNavItems : []),
+    ...filteredBaseNavItems,
+    ...(userRole === 'physician' || isAdmin ? [physicianNavItem] : []),
+    ...(isAdmin ? filteredAdminNavItems : []),
   ];
   const [location] = useLocation();
 
@@ -192,11 +225,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
-                          : "hover-elevate"
-                      }`}
+                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
+                        : "hover-elevate"
+                        }`}
                     >
                       <Link
                         href={item.url}
