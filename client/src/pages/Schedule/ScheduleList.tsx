@@ -1,5 +1,9 @@
-import React from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import React, { useState } from "react";
+import {
+  useQuery,
+  keepPreviousData,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
@@ -10,10 +14,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, Plus, Edit } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { convertTo12Hour } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Schedule {
   id: string;
@@ -22,6 +42,10 @@ interface Schedule {
   start_time: string;
   end_time: string;
   interval: string;
+  Doctor?: {
+    first_name: string;
+    last_name: string;
+  };
 }
 
 interface SchedulesResponse {
@@ -65,8 +89,12 @@ const weekDays: Record<string, string> = {
 const ScheduleList: React.FC = () => {
   const [page, setPage] = React.useState(1);
   const [pageSize] = React.useState(10);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { token } = useAuth();
+  const queryClient = useQueryClient();
 
   const {
     data: schedulesResponse,
@@ -90,6 +118,46 @@ const ScheduleList: React.FC = () => {
   const handleNextPage = () => {
     if (schedulesResponse && page < schedulesResponse?.totalPages) {
       setPage((p) => p + 1);
+    }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await apiRequest(
+        "DELETE",
+        `/doctor/schedules/delete/${deleteId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete schedule");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["schedules"] });
+
+      toast({
+        title: "Success",
+        description: "Schedule deleted successfully",
+      });
+
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete schedule",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -161,7 +229,7 @@ const ScheduleList: React.FC = () => {
                   <TableHeader className="bg-gray-50">
                     <TableRow>
                       <TableHead className="font-semibold text-gray-700">
-                        Doctor ID
+                        Doctor
                       </TableHead>
                       <TableHead className="font-semibold text-gray-700">
                         Day
@@ -187,7 +255,9 @@ const ScheduleList: React.FC = () => {
                         className="hover:bg-gray-50/50 transition-colors"
                       >
                         <TableCell className="font-medium text-gray-900">
-                          {schedule.doctor_id}
+                          {schedule?.Doctor?.first_name +
+                            " " +
+                            schedule?.Doctor?.last_name}
                         </TableCell>
                         <TableCell className="text-gray-600">
                           {weekDays[schedule.week_day_id] ||
@@ -199,7 +269,7 @@ const ScheduleList: React.FC = () => {
                         <TableCell className="text-gray-600">
                           {convertTo12Hour(schedule.end_time)}
                         </TableCell>
-                        <TableCell className="text-gray-600">
+                        <TableCell className="text-gray-600 ">
                           {schedule.interval}
                         </TableCell>
                         <TableCell className="text-center">
@@ -213,6 +283,14 @@ const ScheduleList: React.FC = () => {
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="hover:bg-red-50 hover:text-red-600"
+                              onClick={() => handleDeleteClick(schedule.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -270,6 +348,41 @@ const ScheduleList: React.FC = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Schedule</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this schedule? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

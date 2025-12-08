@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const convertToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 export const changeDateFormate = (date: string): string => {
   let [year, month, day] = date?.split("-");
   if (month?.length < 2) {
@@ -27,4 +36,18 @@ export const convertTo12Hour = (time24: string): string => {
   return `${hour12.toString().padStart(2, "0")}:${
     minutes.length < 2 ? "0" + minutes : minutes
   } ${ampm}`;
+};
+const userType: Record<number, string> = {
+  1: "Admin",
+  2: "Patient",
+  3: "Doctor",
+  4: "Staff",
+};
+
+export const getUserType = () => {
+  const type = localStorage.getItem("user_type");
+  if (type) {
+    return userType[Number(type)];
+  }
+  return "";
 };

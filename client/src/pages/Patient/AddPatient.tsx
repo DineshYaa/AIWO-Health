@@ -18,6 +18,7 @@ import { Link, useLocation, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient } from "@tanstack/react-query";
+import { convertToBase64 } from "@/lib/utils";
 
 const patientSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -42,7 +43,7 @@ const patientSchema = z.object({
   status: z.number().min(0, "Status is required"),
   // Hidden fields
   role_id: z.string().min(1, "Role is required").default("2"),
-  profile_url: z.string().url("Invalid URL").or(z.literal("")).default(""),
+  profile_url: z.string().optional(),
   patient_serial_no: z.string().optional(),
 });
 
@@ -51,6 +52,7 @@ type PatientFormData = z.infer<typeof patientSchema>;
 const AddPatient = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [profileImageBlob, setProfileImageBlob] = useState<string | null>(null);
   const { token } = useAuth();
   const [, setLocation] = useLocation();
   const [match, params] = useRoute("/patients/:action/:id?");
@@ -84,6 +86,7 @@ const AddPatient = () => {
       spouseName: "",
       alternative_contact: "",
       status: 1,
+      profile_url: "",
     },
   });
 
@@ -136,6 +139,39 @@ const AddPatient = () => {
 
     fetchPatientData();
   }, [isEditMode, patientId, token, setValue]);
+
+  const profileUrl = watch("profile_url");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        // Convert to base64 for form submission
+        const base64 = await convertToBase64(file);
+        setValue("profile_url", base64);
+
+        // Create blob URL for viewing in new tab
+        const blobUrl = URL.createObjectURL(file);
+        setProfileImageBlob(blobUrl);
+      } catch (error) {
+        console.error("Error converting file to base64:", error);
+        toast({
+          title: "Error",
+          description: "Failed to process image file",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (profileImageBlob) {
+        URL.revokeObjectURL(profileImageBlob);
+      }
+    };
+  }, [profileImageBlob]);
 
   const onSubmit = async (data: PatientFormData) => {
     try {
@@ -377,6 +413,54 @@ const AddPatient = () => {
                     placeholder="Enter spouse name"
                     className="border-gray-300 focus:ring-teal-500 focus:border-transparent"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Image */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                Profile Image
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="profile_url" className="text-gray-700">
+                    Profile Photo
+                  </Label>
+                  <Input
+                    id="profile_url"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="border-gray-300 focus:ring-teal-500 focus:border-transparent"
+                  />
+                  {errors.profile_url && (
+                    <p className="text-sm text-red-500">
+                      {errors.profile_url.message}
+                    </p>
+                  )}
+                  {profileUrl && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500 mb-2">Preview:</p>
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
+                        <img
+                          src={profileUrl}
+                          alt="Profile Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {profileImageBlob && (
+                        <a
+                          href={profileImageBlob}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-teal-600 hover:text-teal-700 mt-2 inline-block"
+                        >
+                          View Full Size
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

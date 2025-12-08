@@ -238,15 +238,6 @@ const ViewDoctor = () => {
               </div>
               <div>
                 <Label className="text-gray-500 text-sm flex items-center gap-1">
-                  <Mail className="w-3 h-3" />
-                  Email
-                </Label>
-                <p className="text-gray-900 font-medium mt-1">
-                  {doctorData.email}
-                </p>
-              </div>
-              <div>
-                <Label className="text-gray-500 text-sm flex items-center gap-1">
                   <Phone className="w-3 h-3" />
                   Contact
                 </Label>
@@ -258,6 +249,15 @@ const ViewDoctor = () => {
                 <Label className="text-gray-500 text-sm">Gender</Label>
                 <p className="text-gray-900 font-medium mt-1">
                   {genderMap[doctorData.gender_type] || "Not specified"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-gray-500 text-sm flex items-center gap-1">
+                  <Mail className="w-3 h-3" />
+                  Email
+                </Label>
+                <p className="text-gray-900 font-medium mt-1">
+                  {doctorData.email}
                 </p>
               </div>
             </div>
