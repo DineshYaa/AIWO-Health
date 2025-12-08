@@ -96,14 +96,19 @@ const baseNavItems = [
     url: "/profile",
     icon: User,
   },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   url: "/settings",
+  //   icon: Settings,
+  // },
   {
     title: "Schedule",
     url: "/schedules",
+    icon: Calendar,
+  },
+  {
+    title: "Appointments",
+    url: "/appointments",
     icon: Calendar,
   },
   {
@@ -233,11 +238,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${
-                        isActive
+                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
                           : "hover-elevate"
-                      }`}
+                        }`}
                     >
                       <Link
                         href={item.url}

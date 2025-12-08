@@ -18,7 +18,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 // Role types
 const ROLE_TYPES = [
     { value: 'doctor', label: 'Doctor', icon: Users, color: 'bg-blue-500' },
-    { value: 'admin', label: 'Admin', icon: Shield, color: 'bg-purple-500' },
+    // { value: 'admin', label: 'Admin', icon: Shield, color: 'bg-purple-500' },
 ];
 
 // Modules/Permissions
@@ -26,6 +26,8 @@ const MODULES = [
     { id: 'patients', name: 'Patients', icon: '👤' },
     { id: 'doctors', name: 'Doctors', icon: '👨‍⚕️' },
     { id: 'settings', name: 'Settings', icon: '⚙️' },
+    { id: 'teammember', name: 'Team Member', icon: '👥' },
+    { id: 'schedule', name: 'Schedule', icon: '🕐' },
     // { id: 'appointments', name: 'Appointments', icon: '📅' },
     // { id: 'billing_payment', name: 'Billing Payment', icon: '💳' },
     // { id: 'schedule', name: 'Schedule', icon: '🕐' },
