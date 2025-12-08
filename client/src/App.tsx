@@ -28,6 +28,7 @@ import LoginPage from "./pages/Login";
 import ForgotPasswordPage from "./pages/ForgotPassword";
 import RolesPage from "./pages/Roles/Roles";
 import DoctorSchedulePage from "./pages/Schedule/doctorSchedule";
+import ScheduleList from "./pages/Schedule/ScheduleList";
 import RolesListPage from "./pages/Roles/RolesList";
 import AddRolePage from "./pages/Roles/AddRole";
 import DoctorList from "./pages/Doctor/DoctorList";
@@ -73,8 +74,10 @@ function AuthenticatedLayout() {
               <Route path="/roles/add" component={AddRolePage} />
               <Route path="/roles/edit/:id" component={AddRolePage} />
               <Route path="/physician" component={PhysicianDashboard} />
+              <Route path="/schedules" component={ScheduleList} />
+              <Route path="/schedules/add" component={DoctorSchedulePage} />
               <Route
-                path="/api/doctor-schedule"
+                path="/schedules/edit/:id"
                 component={DoctorSchedulePage}
               />
 
@@ -131,7 +134,11 @@ function Router() {
         return <LoginPage />;
       case "/forgot-password":
         return <ForgotPasswordPage />;
-      case "/api/doctor-schedule":
+      case "/schedules":
+        return <ScheduleList />;
+      case "/schedules/add":
+        return <DoctorSchedulePage />;
+      case "/schedules/edit/:id":
         return <DoctorSchedulePage />;
       case "/doctors":
         return <DoctorList />;
