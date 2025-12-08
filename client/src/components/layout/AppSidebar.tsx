@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +27,7 @@ import {
   Shield,
   Video,
   Users,
+  Package,
 } from "lucide-react";
 // import type { User as UserType } from "@shared/schema";
 
@@ -109,6 +111,11 @@ const baseNavItems = [
     url: "/appointments",
     icon: Calendar,
   },
+  {
+    title: "Packages",
+    url: "/packages",
+    icon: Package,
+  },
 ];
 
 const physicianNavItem = {
@@ -138,10 +145,11 @@ const adminNavItems = [
 
 export function AppSidebar({ user }: AppSidebarProps) {
   // console.log(user);
+  const { logout } = useAuth();
   const userRole = user?.role || "user";
   const isAdmin = user?.user_type == 1; // user_type 1 = admin
-  console.log('userRole:', userRole, 'isAdmin:', isAdmin);
-  console.log('permissions:', user?.permissions);
+  console.log("userRole:", userRole, "isAdmin:", isAdmin);
+  console.log("permissions:", user?.permissions);
 
   // Helper function to check if user has access to a module
   const hasAccess = (moduleName: string): boolean => {
@@ -152,12 +160,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
   };
 
   // Filter base nav items based on permissions
-  const filteredBaseNavItems = baseNavItems.filter(item => {
+  const filteredBaseNavItems = baseNavItems.filter((item) => {
     // Map menu titles to permission module names
     const permissionMap: Record<string, string> = {
-      'Doctors': 'doctors',
-      'Patients': 'patients',
-      'Settings': 'settings',
+      Doctors: "doctors",
+      Patients: "patients",
+      Settings: "settings",
     };
 
     const moduleName = permissionMap[item.title];
@@ -168,16 +176,16 @@ export function AppSidebar({ user }: AppSidebarProps) {
   });
 
   // Filter admin nav items based on permissions
-  const filteredAdminNavItems = adminNavItems.filter(item => {
-    if (item.title === 'Settings') {
-      return hasAccess('settings');
+  const filteredAdminNavItems = adminNavItems.filter((item) => {
+    if (item.title === "Settings") {
+      return hasAccess("settings");
     }
     return true; // Show other admin items (Roles, Admin)
   });
 
   const navItems = [
     ...filteredBaseNavItems,
-    ...(userRole === 'physician' || isAdmin ? [physicianNavItem] : []),
+    ...(userRole === "physician" || isAdmin ? [physicianNavItem] : []),
     ...(isAdmin ? filteredAdminNavItems : []),
   ];
   const [location] = useLocation();
@@ -231,8 +239,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     <SidebarMenuButton
                       asChild
                       className={`py-3 px-4 rounded-lg transition-colors ${isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
-                        : "hover-elevate"
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
+                          : "hover-elevate"
                         }`}
                     >
                       <Link
@@ -305,14 +313,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </div>
           </div>
         </div>
-        <a
-          href="/api/logout"
-          className="flex items-center gap-2 px-4 py-2 mt-2 text-sm text-muted-foreground hover-elevate rounded-lg transition-colors"
+        <button
+          onClick={() => logout()}
+          className="flex items-center gap-2 px-4 py-2 mt-2 text-sm text-muted-foreground hover-elevate rounded-lg transition-colors w-full text-left"
           data-testid="link-logout"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
-        </a>
+        </button>
       </SidebarFooter>
     </Sidebar>
   );

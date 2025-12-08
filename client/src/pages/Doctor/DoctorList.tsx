@@ -123,7 +123,7 @@ const DoctorList: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
       <div className="max-w-7xl w-full mx-auto">
         {/* Header Section */}
-        <div className="flex items-center gap-3 justify-center mb-4">
+        {/* <div className="flex items-center gap-3 justify-center mb-4">
           <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
             <svg
               className="w-6 h-6 text-white"
@@ -137,7 +137,7 @@ const DoctorList: React.FC = () => {
             <span className="text-xl font-bold text-gray-900">AIWO</span>
             <span className="text-xl text-gray-600"> Healthcation</span>
           </div>
-        </div>
+        </div> */}
         <div className="text-left mb-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Doctors Directory
@@ -180,30 +180,30 @@ const DoctorList: React.FC = () => {
             <>
               <div className="rounded-lg border border-gray-200 overflow-hidden">
                 <Table>
-                  <TableHeader className="bg-gray-50">
+                  <TableHeader className="bg-teal-300">
                     <TableRow>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Name
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Email
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Contact
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Specialization
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Designation
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Status
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700">
+                      <TableHead className="font-semibold text-gray-800">
                         Joined Date
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-center">
+                      <TableHead className="font-semibold text-gray-800 text-center">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -231,10 +231,11 @@ const DoctorList: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${doctor.status === 1
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              doctor.status === 1
                                 ? "bg-teal-100 text-teal-800"
                                 : "bg-red-100 text-red-800"
-                              }`}
+                            }`}
                           >
                             {doctor.status === 1 ? "Active" : "Inactive"}
                           </span>

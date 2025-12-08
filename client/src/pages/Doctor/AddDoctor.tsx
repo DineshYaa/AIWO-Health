@@ -19,13 +19,14 @@ import { Link, useLocation, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { convertToBase64 } from "@/lib/utils";
 
 const doctorSchema = z.object({
   first_name: z.string().min(2, "First name is required"),
-  last_name: z.string().min(2, "Last name is required"),
+  last_name: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   contact: z.string().min(10, "Contact number must be at least 10 digits"),
-  address1: z.string().min(5, "Address is required"),
+  address1: z.string().min(3, "Address is required"),
   address2: z.string().optional(),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
@@ -38,7 +39,6 @@ const doctorSchema = z.object({
   doctor_commission: z.string().min(1, "Commission is required"),
   gender_type: z.string().min(1, "Gender is required"),
   status: z.string().min(1, "Status is required"),
-  // These fields are now user-selectable
   designation_id: z.string().min(1, "Please select a designation"),
   specialization_id: z.string().min(1, "Please select a specialization"),
   user_id: z
@@ -46,7 +46,7 @@ const doctorSchema = z.object({
     .uuid("Invalid user ID")
     .default("3b544aa0-755a-47b3-8457-c4d4d952675b"),
   role_id: z.string().min(1, "Role is required").default("1"),
-  profile_url: z.string().url("Invalid URL").or(z.literal("")).default(""),
+  profile_url: z.string().optional(),
   doctor_serial_no: z.string().min(1, "Serial number is required").default("1"),
 });
 
@@ -55,6 +55,7 @@ type DoctorFormData = z.infer<typeof doctorSchema>;
 const AddDoctor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [profileImageBlob, setProfileImageBlob] = useState<string | null>(null);
   const { token } = useAuth();
   const [, setLocation] = useLocation();
   const [match, params] = useRoute("/doctors/:action/:id?");
@@ -69,6 +70,7 @@ const AddDoctor = () => {
     formState: { errors },
     setValue,
     reset,
+    watch,
   } = useForm<DoctorFormData>({
     resolver: zodResolver(doctorSchema),
     defaultValues: {
@@ -89,6 +91,7 @@ const AddDoctor = () => {
       about_me: "",
       status: "",
       doctor_commission: "",
+      profile_url: "",
     },
   });
 
@@ -166,7 +169,53 @@ const AddDoctor = () => {
 
     fetchDoctorData();
   }, [isEditMode, doctorId, token, setValue]);
-  console.log("errors ", errors);
+
+  const { data: response, isLoading: isRolesLoading } = useQuery<any>({
+    queryKey: ["/api/roles", 1],
+    queryFn: async () => {
+      const res: any = await apiRequest(
+        "GET",
+        `/user/role?page=1&limit=100`,
+        undefined
+      );
+      return res.json();
+    },
+  });
+
+  const roles = isRolesLoading ? [] : response?.roles || [];
+  const profileUrl = watch("profile_url");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        // Convert to base64 for form submission
+        const base64 = await convertToBase64(file);
+        setValue("profile_url", base64);
+
+        // Create blob URL for viewing in new tab
+        const blobUrl = URL.createObjectURL(file);
+        setProfileImageBlob(blobUrl);
+      } catch (error) {
+        console.error("Error converting file to base64:", error);
+        toast({
+          title: "Error",
+          description: "Failed to process image file",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (profileImageBlob) {
+        URL.revokeObjectURL(profileImageBlob);
+      }
+    };
+  }, [profileImageBlob]);
+
   const onSubmit = async (data: DoctorFormData) => {
     try {
       setIsLoading(true);
@@ -176,8 +225,12 @@ const AddDoctor = () => {
         : `/doctor/doctors/InsertDoctor`;
 
       const method = isEditMode ? "PUT" : "POST";
-
-      const response = await apiRequest(method, url, data);
+      const payload = {
+        ...data,
+        role_base_id: roles.filter((role: any) => role.name === "doctor")[0]
+          ?.id,
+      };
+      const response = await apiRequest(method, url, payload);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -225,7 +278,6 @@ const AddDoctor = () => {
     <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
       <div className="max-w-5xl w-full mx-auto">
         {/* Header Section */}
-
         <div className="flex items-center gap-3 justify-center mb-4">
           <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
             <svg
@@ -361,6 +413,54 @@ const AddDoctor = () => {
                     <p className="text-sm text-red-500">
                       {errors.gender_type.message}
                     </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Image */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                Profile Image
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="profile_url" className="text-gray-700">
+                    Profile Photo
+                  </Label>
+                  <Input
+                    id="profile_url"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="border-gray-300 focus:ring-teal-500 focus:border-transparent"
+                  />
+                  {errors.profile_url && (
+                    <p className="text-sm text-red-500">
+                      {errors.profile_url.message}
+                    </p>
+                  )}
+                  {profileUrl && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500 mb-2">Preview:</p>
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
+                        <img
+                          src={profileUrl}
+                          alt="Profile Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {profileImageBlob && (
+                        <a
+                          href={profileImageBlob}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-teal-600 hover:text-teal-700 mt-2 inline-block"
+                        >
+                          View Full Size
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -656,6 +756,14 @@ const AddDoctor = () => {
             </div>
 
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-100">
+              <Link href="/doctors">
+                <Button
+                  variant="outline"
+                  className="text-gray-500 hover:text-teal-600"
+                >
+                  Cancel
+                </Button>
+              </Link>
               <Button
                 type="button"
                 variant="outline"

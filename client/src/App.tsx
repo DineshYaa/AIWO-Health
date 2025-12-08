@@ -44,6 +44,8 @@ import TeamMemberView from "./pages/teammember/teamMember.View";
 import TeamMemberForm from "./pages/teammember/teamMember.Form";
 import AppointmentList from "./pages/Appointment/AppointmentList";
 import AddAppointment from "./pages/Appointment/AddAppointment";
+import PackagesList from "./pages/Packages/PackagesList";
+import AddPackage from "./pages/Packages/AddPackage";
 function AuthenticatedLayout() {
   const { user } = useAuth();
 
@@ -110,6 +112,9 @@ function AuthenticatedLayout() {
               <Route path="/appointments" component={AppointmentList} />
               <Route path="/appointments/add" component={AddAppointment} />
               <Route path="/appointments/edit/:id" component={AddAppointment} />
+              <Route path="/packages" component={PackagesList} />
+              <Route path="/packages/add" component={AddPackage} />
+              <Route path="/packages/edit/:id" component={AddPackage} />
 
               <Route path="/settings" component={SettingsPage} />
 
@@ -168,6 +173,12 @@ function Router() {
         return <AddDoctor />;
       case "/roles":
         return <RolesListPage />;
+      case "/packages":
+        return <PackagesList />;
+      case "/packages/add":
+        return <AddPackage />;
+      case "/packages/edit/:id":
+        return <AddPackage />;
       default:
         return <Landing />;
     }
