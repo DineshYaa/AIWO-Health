@@ -99,8 +99,11 @@ const baseNavItems = [
     url: "/settings",
     icon: Settings,
   },
-
-
+  {
+    title: "Schedule",
+    url: "/schedules",
+    icon: Calendar,
+  },
 ];
 
 const physicianNavItem = {
@@ -129,14 +132,14 @@ const adminNavItems = [
 ];
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  console.log(user);
+  // console.log(user);
   const userRole = user?.role || "user";
   const isAdmin = user?.user_type == 1; // user_type 1 = admin
-  console.log('userRole:', userRole, 'isAdmin:', isAdmin);
+  // console.log("userRole:", userRole, "isAdmin:", isAdmin);
 
   const navItems = [
     ...baseNavItems,
-    ...(userRole === 'physician' || isAdmin ? [physicianNavItem] : []),
+    ...(userRole === "physician" || isAdmin ? [physicianNavItem] : []),
     ...(isAdmin ? adminNavItems : []),
   ];
   const [location] = useLocation();
@@ -189,10 +192,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`py-3 px-4 rounded-lg transition-colors ${isActive
+                      className={`py-3 px-4 rounded-lg transition-colors ${
+                        isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
                           : "hover-elevate"
-                        }`}
+                      }`}
                     >
                       <Link
                         href={item.url}
