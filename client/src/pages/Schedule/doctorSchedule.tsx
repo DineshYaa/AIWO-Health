@@ -10,14 +10,26 @@ import { useLocation, useRoute, Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { convertTo12Hour } from "@/lib/utils";
 
-const scheduleSchema = z.object({
-  doctor_id: z.string().min(1, "Doctor is required"),
-  week_day_id: z.string().min(1, "Week day is required"),
-  start_time: z.string().min(1, "Start time is required"),
-  end_time: z.string().min(1, "End time is required"),
-  interval: z.string().min(1, "Interval is required"),
-});
+const scheduleSchema = z
+  .object({
+    doctor_id: z.string().min(1, "Doctor is required"),
+    week_day_id: z.string().min(1, "Week day is required"),
+    start_time: z.string().min(1, "Start time is required"),
+    end_time: z.string().min(1, "End time is required"),
+    interval: z.string().min(1, "Interval is required"),
+  })
+  .refine(
+    (data) => {
+      if (!data.start_time || !data.end_time) return true;
+      return data.end_time > data.start_time;
+    },
+    {
+      message: "End time must be after start time",
+      path: ["end_time"],
+    }
+  );
 
 type ScheduleFormData = z.infer<typeof scheduleSchema>;
 
@@ -201,7 +213,17 @@ export default function DoctorSchedulePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6 py-12">
       <div className="max-w-md w-full">
-        <div className="text-center mb-10 relative">
+        <div className="mb-10 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {isEditMode ? "Edit Schedule" : "Add Schedule"}
+            </h2>
+            <p className="text-gray-600 text-sm">
+              {isEditMode
+                ? "Update appointment availability"
+                : "Configure your appointment availability"}
+            </p>
+          </div>
           <Link href="/schedules">
             <Button
               variant="ghost"
@@ -211,7 +233,7 @@ export default function DoctorSchedulePage() {
               Back
             </Button>
           </Link>
-          <div className="flex items-center gap-3 justify-center mb-4">
+          {/* <div className="flex items-center gap-3 justify-center mb-4">
             <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
               <svg
                 className="w-6 h-6 text-white"
@@ -225,19 +247,11 @@ export default function DoctorSchedulePage() {
               <span className="text-xl font-bold text-gray-900">AIWO</span>
               <span className="text-xl text-gray-600"> Healthcation</span>
             </div>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {isEditMode ? "Edit Schedule" : "Doctor Schedule"}
-          </h2>
-          <p className="text-gray-600">
-            {isEditMode
-              ? "Update appointment availability"
-              : "Configure your appointment availability"}
-          </p>
+          </div> */}
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Doctor Selection */}
             <div>
               <Label className="block text-sm font-medium text-gray-700 mb-2">
@@ -406,7 +420,8 @@ export default function DoctorSchedulePage() {
                 <div className="flex justify-between">
                   <span>Time:</span>
                   <span className="font-medium text-gray-900">
-                    {formData.start_time} - {formData.end_time}
+                    {convertTo12Hour(formData.start_time)} -{" "}
+                    {convertTo12Hour(formData.end_time)}
                   </span>
                 </div>
                 <div className="flex justify-between">

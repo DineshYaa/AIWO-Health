@@ -42,6 +42,8 @@ import ViewPatient from "./pages/Patient/ViewPatient";
 
 import TeamMemberView from "./pages/teammember/teamMember.View";
 import TeamMemberForm from "./pages/teammember/teamMember.Form";
+import PackagesList from "./pages/Packages/PackagesList";
+import AddPackage from "./pages/Packages/AddPackage";
 function AuthenticatedLayout() {
   const { user } = useAuth();
 
@@ -105,6 +107,10 @@ function AuthenticatedLayout() {
               <Route path="/patients/edit/:id" component={AddPatient} />
               <Route path="/patients/view/:id" component={ViewPatient} />
 
+              <Route path="/packages" component={PackagesList} />
+              <Route path="/packages/add" component={AddPackage} />
+              <Route path="/packages/edit/:id" component={AddPackage} />
+
               <Route path="/settings" component={SettingsPage} />
 
               <Route path="/admin">
@@ -162,6 +168,12 @@ function Router() {
         return <AddDoctor />;
       case "/roles":
         return <RolesListPage />;
+      case "/packages":
+        return <PackagesList />;
+      case "/packages/add":
+        return <AddPackage />;
+      case "/packages/edit/:id":
+        return <AddPackage />;
       default:
         return <Landing />;
     }

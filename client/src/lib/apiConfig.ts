@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   // Empty base URL - Vite proxy will handle routing to backend
-  BASE_URL: "",
+  BASE_URL: "", // http://192.168.0.197:7001
   TIMEOUT: 30000, // 30 seconds
 };
 

@@ -114,7 +114,7 @@ export function useAuth() {
     }
   }, [authData]);
 
-  console.log("authData : ", authData);
+  // console.log("authData : ", authData);
 
   const logout = useMutation({
     mutationFn: async () => {
@@ -131,7 +131,7 @@ export function useAuth() {
       // Clear all queries
       queryClient.clear();
       // Redirect to login
-      window.location.href = "/login";
+      window.location.href = "api/login";
     },
   });
 

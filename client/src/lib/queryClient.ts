@@ -51,6 +51,7 @@ export async function apiRequest(
 
   // Build full URL with base URL
   const fullUrl = buildApiUrl(url);
+  console.log("Full URL:", fullUrl);
   const res = await fetch(fullUrl, fetchOptions);
 
   await throwIfResNotOk(res);
