@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { convertTo12Hour, changeDateFormate } from "@/lib/utils";
 
 interface Appointment {
     id: string;
@@ -200,9 +201,7 @@ const AppointmentList: React.FC = () => {
                                             <TableHead className="font-semibold text-gray-700">
                                                 Time
                                             </TableHead>
-                                            <TableHead className="font-semibold text-gray-700">
-                                                Type
-                                            </TableHead>
+
                                             <TableHead className="font-semibold text-gray-700">
                                                 Reason
                                             </TableHead>
@@ -229,16 +228,14 @@ const AppointmentList: React.FC = () => {
                                                         {appointment.doctor_name || appointment.doctor_id}
                                                     </TableCell>
                                                     <TableCell className="text-gray-600">
-                                                        {new Date(appointment.date).toLocaleDateString()}
+                                                        {changeDateFormate(appointment.date)}
                                                     </TableCell>
                                                     <TableCell className="text-gray-600">
                                                         {appointment.start_time && appointment.end_time
-                                                            ? `${appointment.start_time} - ${appointment.end_time}`
+                                                            ? `${convertTo12Hour(appointment.start_time)} - ${convertTo12Hour(appointment.end_time)}`
                                                             : "N/A"}
                                                     </TableCell>
-                                                    <TableCell className="text-gray-600">
-                                                        {getAppointmentTypeLabel(appointment.appointment_type)}
-                                                    </TableCell>
+
                                                     <TableCell className="text-gray-600">
                                                         {appointment.reason}
                                                     </TableCell>

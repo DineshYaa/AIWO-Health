@@ -112,6 +112,11 @@ const baseNavItems = [
     icon: Calendar,
   },
   {
+    title: "Holidays",
+    url: "/holidays",
+    icon: Calendar,
+  },
+  {
     title: "Packages",
     url: "/packages",
     icon: Package,
@@ -239,8 +244,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     <SidebarMenuButton
                       asChild
                       className={`py-3 px-4 rounded-lg transition-colors ${isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
-                          : "hover-elevate"
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-primary"
+                        : "hover-elevate"
                         }`}
                     >
                       <Link
