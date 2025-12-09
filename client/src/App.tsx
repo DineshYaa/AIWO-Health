@@ -44,8 +44,11 @@ import TeamMemberView from "./pages/teammember/teamMember.View";
 import TeamMemberForm from "./pages/teammember/teamMember.Form";
 import AppointmentList from "./pages/Appointment/AppointmentList";
 import AddAppointment from "./pages/Appointment/AddAppointment";
+import ViewAppointment from "./pages/Appointment/ViewAppointment";
 import PackagesList from "./pages/Packages/PackagesList";
 import AddPackage from "./pages/Packages/AddPackage";
+import HolidayList from "./pages/Holiday/HolidayList";
+import AddHoliday from "./pages/Holiday/AddHoliday";
 import BillingsList from "./pages/Billings/BillingsList";
 import AddBillingForm from "./pages/Billings/AddBillingForm";
 function AuthenticatedLayout() {
@@ -116,9 +119,14 @@ function AuthenticatedLayout() {
               <Route path="/appointments" component={AppointmentList} />
               <Route path="/appointments/add" component={AddAppointment} />
               <Route path="/appointments/edit/:id" component={AddAppointment} />
+              <Route path="/appointments/view/:id" component={ViewAppointment} />
               <Route path="/packages" component={PackagesList} />
               <Route path="/packages/add" component={AddPackage} />
               <Route path="/packages/edit/:id" component={AddPackage} />
+
+              <Route path="/holidays" component={HolidayList} />
+              <Route path="/holidays/add" component={AddHoliday} />
+              <Route path="/holidays/edit/:id" component={AddHoliday} />
 
               <Route path="/settings" component={SettingsPage} />
 

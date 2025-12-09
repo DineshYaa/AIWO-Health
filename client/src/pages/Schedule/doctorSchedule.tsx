@@ -95,13 +95,13 @@ export default function DoctorSchedulePage() {
   const formData = watch();
 
   const weekDays = [
-    { id: "1", name: "Monday" },
-    { id: "2", name: "Tuesday" },
-    { id: "3", name: "Wednesday" },
-    { id: "4", name: "Thursday" },
-    { id: "5", name: "Friday" },
-    { id: "6", name: "Saturday" },
-    { id: "7", name: "Sunday" },
+    { id: "1", name: "Sunday" },
+    { id: "2", name: "Monday" },
+    { id: "3", name: "Tuesday" },
+    { id: "4", name: "Wednesday" },
+    { id: "5", name: "Thursday" },
+    { id: "6", name: "Friday" },
+    { id: "7", name: "Saturday" },
   ];
 
   const intervals = [
@@ -357,11 +357,10 @@ export default function DoctorSchedulePage() {
                     key={interval.value}
                     type="button"
                     onClick={() => setValue("interval", interval.value)}
-                    className={`py-3 px-4 rounded-lg border-2 transition font-medium ${
-                      formData.interval === interval.value
-                        ? "border-teal-500 bg-teal-50 text-teal-700"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-teal-300"
-                    }`}
+                    className={`py-3 px-4 rounded-lg border-2 transition font-medium ${formData.interval === interval.value
+                      ? "border-teal-500 bg-teal-50 text-teal-700"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-teal-300"
+                      }`}
                   >
                     {interval.Label}
                   </button>

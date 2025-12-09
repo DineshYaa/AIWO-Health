@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { convertTo12Hour } from "@/lib/utils";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
@@ -28,8 +29,6 @@ const appointmentSchema = z.object({
     date: z.string().min(1, "Please select a date"),
     reason: z.string().min(1, "Please enter a reason"),
     symptom: z.string().min(1, "Please enter symptoms"),
-    appointment_type: z.string().min(1, "Please select appointment type"),
-    service_fees: z.string().min(1, "Please enter service fees"),
     remarks: z.string().optional(),
     reshedule: z.string().optional(),
     week_day_id: z.string().optional(),
@@ -72,6 +71,10 @@ interface Weekday {
 const AddAppointment: React.FC = () => {
     const { toast } = useToast();
     const [, setLocation] = useLocation();
+    const [match, params] = useRoute("/appointments/edit/:id");
+    const appointmentId = params?.id;
+    const isEditMode = !!appointmentId;
+
     const [selectedDoctorId, setSelectedDoctorId] = useState<string>("");
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [weekdayIdFromDate, setWeekdayIdFromDate] = useState<string>("");
@@ -83,6 +86,7 @@ const AddAppointment: React.FC = () => {
         formState: { errors },
         setValue,
         watch,
+        reset,
     } = useForm<AppointmentFormData>({
         resolver: zodResolver(appointmentSchema),
         defaultValues: {
@@ -92,8 +96,6 @@ const AddAppointment: React.FC = () => {
             date: "",
             reason: "",
             symptom: "",
-            appointment_type: "1",
-            service_fees: "",
             remarks: "",
             reshedule: "1",
             week_day_id: "",
@@ -109,6 +111,65 @@ const AddAppointment: React.FC = () => {
         const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
         return (dayOfWeek + 1).toString(); // Convert to 1=Sunday, 2=Monday, etc.
     };
+
+    // Fetch existing appointment data for edit mode
+    const { data: appointmentData, isLoading: loadingAppointment } = useQuery({
+        queryKey: ["appointment", appointmentId],
+        queryFn: async () => {
+            if (!appointmentId) return null;
+            const response = await apiRequest(
+                "GET",
+                `/appointment/appointments/GetAppointmentById/${appointmentId}`
+            );
+            if (!response.ok) throw new Error("Failed to fetch appointment");
+            const result = await response.json();
+            return result.data;
+        },
+        enabled: isEditMode && !!appointmentId,
+        refetchOnMount: "always", // Always refetch when component mounts
+        staleTime: 0, // Consider data stale immediately
+    });
+
+    // Pre-populate form when appointment data is loaded
+    useEffect(() => {
+        if (appointmentData && isEditMode) {
+            const formData = {
+                patient_id: appointmentData.patient_id || "",
+                doctor_id: appointmentData.doctor_id || "",
+                slot_id: appointmentData.slot_id || "",
+                date: appointmentData.date || "",
+                reason: appointmentData.reason || "",
+                symptom: appointmentData.symptom || "",
+                remarks: appointmentData.remarks || "",
+                reshedule: appointmentData.reshedule?.toString() || "1",
+                week_day_id: appointmentData.week_day_id || "",
+                week_day: appointmentData.week_day || "",
+                start_time: appointmentData.start_time || "",
+                end_time: appointmentData.end_time || "",
+            };
+
+            reset(formData);
+
+            // IMPORTANT: Set selectedDoctorId for slot fetching in edit mode
+            const doctorId = appointmentData.doctor_id || "";
+            setSelectedDoctorId(doctorId);
+            setSelectedDate(appointmentData.date || "");
+
+            if (appointmentData.date && doctorId) {
+                const weekdayId = getWeekdayIdFromDate(appointmentData.date);
+                setWeekdayIdFromDate(weekdayId);
+            }
+        }
+    }, [appointmentData, isEditMode, reset]);
+
+    // Invalidate cache when component unmounts or appointmentId changes
+    useEffect(() => {
+        return () => {
+            if (isEditMode && appointmentId) {
+                queryClient.invalidateQueries({ queryKey: ["appointment", appointmentId] });
+            }
+        };
+    }, [appointmentId, isEditMode]);
 
     // Fetch patients
     const { data: patientsData, isLoading: loadingPatients } = useQuery({
@@ -170,9 +231,17 @@ const AddAppointment: React.FC = () => {
         setSelectedDate(dateString);
         setValue("date", dateString);
 
-        if (dateString && selectedDoctorId) {
+        // In edit mode, use the existing doctor_id from the form
+        const doctorId = isEditMode ? watch("doctor_id") : selectedDoctorId;
+
+        if (dateString && doctorId) {
             const weekdayId = getWeekdayIdFromDate(dateString);
             setWeekdayIdFromDate(weekdayId);
+
+            // Clear previous slot selection when date changes
+            setValue("slot_id", "");
+            setValue("start_time", "");
+            setValue("end_time", "");
         }
     };
 
@@ -199,8 +268,8 @@ const AddAppointment: React.FC = () => {
         }
     };
 
-    // Create appointment mutation
-    const createAppointmentMutation = useMutation({
+    // Create/Update appointment mutation
+    const saveAppointmentMutation = useMutation({
         mutationFn: async (data: AppointmentFormData) => {
             const payload = {
                 patient_id: data.patient_id,
@@ -209,8 +278,8 @@ const AddAppointment: React.FC = () => {
                 date: data.date,
                 reason: data.reason,
                 symptom: data.symptom,
-                appointment_type: parseInt(data.appointment_type),
-                service_fees: parseFloat(data.service_fees),
+                appointment_type: 1, // Default to In-Person
+                service_fees: 0, // Default to 0
                 remarks: data.remarks || "",
                 reshedule: parseInt(data.reshedule || "1"),
                 week_day_id: data.week_day_id || "",
@@ -220,14 +289,16 @@ const AddAppointment: React.FC = () => {
             };
 
             const response = await apiRequest(
-                "POST",
-                "/appointment/appointments/InsertAppointment",
+                isEditMode ? "PUT" : "POST",
+                isEditMode
+                    ? `/appointment/appointments/UpdateAppointment/${appointmentId}`
+                    : "/appointment/appointments/InsertAppointment",
                 payload
             );
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}));
-                throw new Error(error.message || "Failed to create appointment");
+                throw new Error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} appointment`);
             }
 
             return response.json();
@@ -235,26 +306,29 @@ const AddAppointment: React.FC = () => {
         onSuccess: () => {
             toast({
                 title: "Success",
-                description: "Appointment created successfully!",
+                description: `Appointment ${isEditMode ? 'updated' : 'created'} successfully!`,
             });
             queryClient.invalidateQueries({ queryKey: ["appointments"] });
+            if (isEditMode) {
+                queryClient.invalidateQueries({ queryKey: ["appointment", appointmentId] });
+            }
             setLocation("/appointments");
         },
         onError: (error: Error) => {
             toast({
                 title: "Error",
-                description: error.message || "Failed to create appointment",
+                description: error.message || `Failed to ${isEditMode ? 'update' : 'create'} appointment`,
                 variant: "destructive",
             });
         },
     });
 
     const onSubmit = (data: AppointmentFormData) => {
-        createAppointmentMutation.mutate(data);
+        saveAppointmentMutation.mutate(data);
     };
 
     const isLoading =
-        loadingPatients || loadingDoctors || loadingWeekdays || loadingSlots;
+        loadingPatients || loadingDoctors || loadingWeekdays || loadingSlots || loadingAppointment;
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
@@ -284,244 +358,244 @@ const AddAppointment: React.FC = () => {
                         </Button>
                     </Link>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        Add New Appointment
+                        {isEditMode ? "Edit Appointment" : "Add New Appointment"}
                     </h2>
                     <p className="text-gray-600 text-sm">
-                        Fill in the details to create a new appointment
+                        {isEditMode
+                            ? "Update the appointment details"
+                            : "Fill in the details to create a new appointment"}
                     </p>
                 </div>
 
                 <div className="bg-white rounded-xl shadow-lg p-8">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Patient Selection */}
-                        <div>
-                            <Label htmlFor="patient_id">
-                                Patient <span className="text-red-500">*</span>
-                            </Label>
-                            <Select
-                                onValueChange={(value) => setValue("patient_id", value)}
-                                disabled={isLoading}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select a patient" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {patientsData?.map((patient: Patient) => (
-                                        <SelectItem key={patient.id} value={patient.id}>
-                                            {patient.firstName} {patient.lastName} - {patient.email}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.patient_id && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.patient_id.message}
-                                </p>
-                            )}
+                        {/* Two-column grid for form fields */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Patient Selection */}
+                            <div>
+                                <Label htmlFor="patient_id">
+                                    Patient <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    key={`patient-${watch("patient_id")}`}
+                                    onValueChange={(value) => setValue("patient_id", value)}
+                                    disabled={isLoading}
+                                    value={watch("patient_id")}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a patient" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {patientsData?.map((patient: Patient) => (
+                                            <SelectItem key={patient.id} value={patient.id}>
+                                                {patient.firstName} {patient.lastName} - {patient.email}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.patient_id && (
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.patient_id.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Doctor Selection */}
+                            <div>
+                                <Label htmlFor="doctor_id">
+                                    Doctor <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    key={`doctor-${watch("doctor_id")}`}
+                                    onValueChange={(value) => {
+                                        setValue("doctor_id", value);
+                                        setSelectedDoctorId(value);
+                                    }}
+                                    disabled={isLoading}
+                                    value={watch("doctor_id")}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a doctor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {doctorsData?.map((doctor: Doctor) => (
+                                            <SelectItem key={doctor.id} value={doctor.id}>
+                                                Dr. {doctor.first_name} {doctor.last_name} -{" "}
+                                                {doctor.specialization_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.doctor_id && (
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.doctor_id.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Appointment Date */}
+                            <div>
+                                <Label htmlFor="date">
+                                    Appointment Date <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    type="date"
+                                    className="w-full"
+                                    min={new Date().toISOString().split("T")[0]}
+                                    value={watch("date")}
+                                    onChange={(e) => handleDateChange(e.target.value)}
+                                />
+                                {errors.date && (
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.date.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Reason */}
+                            <div>
+                                <Label htmlFor="reason">
+                                    Reason for Visit <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    {...register("reason")}
+                                    placeholder="e.g., Regular checkup"
+                                    className="w-full"
+                                />
+                                {errors.reason && (
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.reason.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Doctor Selection */}
-                        <div>
-                            <Label htmlFor="doctor_id">
-                                Doctor <span className="text-red-500">*</span>
-                            </Label>
-                            <Select
-                                onValueChange={(value) => {
-                                    setValue("doctor_id", value);
-                                    setSelectedDoctorId(value);
-                                }}
-                                disabled={isLoading}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select a doctor" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {doctorsData?.map((doctor: Doctor) => (
-                                        <SelectItem key={doctor.id} value={doctor.id}>
-                                            Dr. {doctor.first_name} {doctor.last_name} -{" "}
-                                            {doctor.specialization_name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.doctor_id && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.doctor_id.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Appointment Date */}
-                        <div>
-                            <Label htmlFor="date">
-                                Appointment Date <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                type="date"
-                                className="w-full"
-                                min={new Date().toISOString().split("T")[0]}
-                                onChange={(e) => handleDateChange(e.target.value)}
-                            />
-                            {errors.date && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.date.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Conditional Slot Selection or Manual Time Entry */}
-                        {selectedDoctorId && (
-                            <>
+                        {/* Slot Selection - Visual Grid */}
+                        {(selectedDoctorId || (isEditMode && watch("doctor_id"))) && selectedDate && (
+                            <div className="space-y-4">
                                 {hasSlots ? (
                                     <div>
-                                        <Label htmlFor="slot_id">
-                                            Available Slot <span className="text-red-500">*</span>
+                                        <Label className="text-base font-semibold mb-3 block">
+                                            Available Time Slots <span className="text-red-500">*</span>
                                         </Label>
-                                        <Select
-                                            onValueChange={handleSlotChange}
-                                            disabled={loadingSlots}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select a time slot" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {slotsData?.map((slot: Slot) => (
-                                                    <SelectItem key={slot.id} value={slot.id}>
-                                                        {slot.week_day} - {slot.start_time} to{" "}
-                                                        {slot.end_time}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                                            {slotsData?.map((slot: Slot) => {
+                                                // Check if this slot is selected by ID or by matching times
+                                                const isSelectedById = watch("slot_id") === slot.id;
+                                                const isSelectedByTime = isEditMode &&
+                                                    watch("start_time") === slot.start_time &&
+                                                    watch("end_time") === slot.end_time;
+                                                const isSelected = isSelectedById || isSelectedByTime;
+
+                                                return (
+                                                    <button
+                                                        key={slot.id}
+                                                        type="button"
+                                                        onClick={() => handleSlotChange(slot.id)}
+                                                        className={`py-2 px-1.5 rounded-md border-2 transition-all text-xs ${isSelected
+                                                            ? "border-green-500 bg-green-50 text-green-700 shadow-sm"
+                                                            : "border-gray-300 bg-white text-gray-700 hover:border-teal-300 hover:bg-gray-50"
+                                                            }`}
+                                                    >
+                                                        <div className="text-center">
+                                                            <div className="font-semibold text-xs">{convertTo12Hour(slot.start_time)}</div>
+                                                            <div className="text-[10px] opacity-75">to</div>
+                                                            <div className="font-semibold text-xs">{convertTo12Hour(slot.end_time)}</div>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                         {errors.slot_id && (
-                                            <p className="text-sm text-red-600 mt-1">
+                                            <p className="text-sm text-red-600 mt-2">
                                                 {errors.slot_id.message}
                                             </p>
                                         )}
                                     </div>
                                 ) : (
-                                    <>
-                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                                    <div className="space-y-4">
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                             <p className="text-sm text-yellow-800">
                                                 No slots available for this doctor. Please enter the
                                                 appointment time manually.
                                             </p>
                                         </div>
 
-                                        {/* Weekday Selection */}
-                                        <div>
-                                            <Label htmlFor="week_day_id">
-                                                Weekday <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Select
-                                                onValueChange={(value) => {
-                                                    setValue("week_day_id", value);
-                                                    const weekday = weekdaysData?.find(
-                                                        (w: Weekday) => w.id === value
-                                                    );
-                                                    if (weekday) setValue("week_day", weekday.day);
-                                                }}
-                                                disabled={loadingWeekdays}
-                                            >
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select weekday" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {weekdaysData?.map((weekday: Weekday) => (
-                                                        <SelectItem key={weekday.id} value={weekday.id}>
-                                                            {weekday.day}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.week_day_id && (
-                                                <p className="text-sm text-red-600 mt-1">
-                                                    {errors.week_day_id.message}
-                                                </p>
-                                            )}
-                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* Weekday Selection */}
+                                            <div>
+                                                <Label htmlFor="week_day_id">
+                                                    Weekday <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        setValue("week_day_id", value);
+                                                        const weekday = weekdaysData?.find(
+                                                            (w: Weekday) => w.id === value
+                                                        );
+                                                        if (weekday) setValue("week_day", weekday.day);
+                                                    }}
+                                                    disabled={loadingWeekdays}
+                                                    value={watch("week_day_id")}
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select weekday" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {weekdaysData?.map((weekday: Weekday) => (
+                                                            <SelectItem key={weekday.id} value={weekday.id}>
+                                                                {weekday.day}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {errors.week_day_id && (
+                                                    <p className="text-sm text-red-600 mt-1">
+                                                        {errors.week_day_id.message}
+                                                    </p>
+                                                )}
+                                            </div>
 
-                                        {/* Start Time */}
-                                        <div>
-                                            <Label htmlFor="start_time">
-                                                Start Time <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Input
-                                                {...register("start_time")}
-                                                type="time"
-                                                className="w-full"
-                                            />
-                                            {errors.start_time && (
-                                                <p className="text-sm text-red-600 mt-1">
-                                                    {errors.start_time.message}
-                                                </p>
-                                            )}
-                                        </div>
+                                            {/* Start Time */}
+                                            <div>
+                                                <Label htmlFor="start_time">
+                                                    Start Time <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    {...register("start_time")}
+                                                    type="time"
+                                                    className="w-full"
+                                                />
+                                                {errors.start_time && (
+                                                    <p className="text-sm text-red-600 mt-1">
+                                                        {errors.start_time.message}
+                                                    </p>
+                                                )}
+                                            </div>
 
-                                        {/* End Time */}
-                                        <div>
-                                            <Label htmlFor="end_time">
-                                                End Time <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Input
-                                                {...register("end_time")}
-                                                type="time"
-                                                className="w-full"
-                                            />
-                                            {errors.end_time && (
-                                                <p className="text-sm text-red-600 mt-1">
-                                                    {errors.end_time.message}
-                                                </p>
-                                            )}
+                                            {/* End Time */}
+                                            <div>
+                                                <Label htmlFor="end_time">
+                                                    End Time <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    {...register("end_time")}
+                                                    type="time"
+                                                    className="w-full"
+                                                />
+                                                {errors.end_time && (
+                                                    <p className="text-sm text-red-600 mt-1">
+                                                        {errors.end_time.message}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </>
+                                    </div>
                                 )}
-                            </>
+                            </div>
                         )}
 
-                        {/* Appointment Type */}
-                        <div>
-                            <Label htmlFor="appointment_type">
-                                Appointment Type <span className="text-red-500">*</span>
-                            </Label>
-                            <Select
-                                onValueChange={(value) => setValue("appointment_type", value)}
-                                defaultValue="1"
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select appointment type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="1">In-Person</SelectItem>
-                                    <SelectItem value="2">Telemedicine</SelectItem>
-                                    <SelectItem value="3">Follow-up</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {errors.appointment_type && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.appointment_type.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Reason */}
-                        <div>
-                            <Label htmlFor="reason">
-                                Reason for Visit <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                {...register("reason")}
-                                placeholder="e.g., Regular checkup"
-                                className="w-full"
-                            />
-                            {errors.reason && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.reason.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Symptoms */}
+                        {/* Symptoms - Full width */}
                         <div>
                             <Label htmlFor="symptom">
                                 Symptoms <span className="text-red-500">*</span>
@@ -539,27 +613,7 @@ const AddAppointment: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Service Fees */}
-                        <div>
-                            <Label htmlFor="service_fees">
-                                Service Fees <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                {...register("service_fees")}
-                                type="number"
-                                placeholder="500"
-                                className="w-full"
-                                min="0"
-                                step="0.01"
-                            />
-                            {errors.service_fees && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.service_fees.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Remarks */}
+                        {/* Remarks - Full width */}
                         <div>
                             <Label htmlFor="remarks">Remarks (Optional)</Label>
                             <Textarea
@@ -574,16 +628,16 @@ const AddAppointment: React.FC = () => {
                         <div className="flex gap-4 pt-4">
                             <Button
                                 type="submit"
-                                disabled={createAppointmentMutation.isPending}
+                                disabled={saveAppointmentMutation.isPending}
                                 className="flex-1 bg-teal-500 hover:bg-teal-600 text-white"
                             >
-                                {createAppointmentMutation.isPending ? (
+                                {saveAppointmentMutation.isPending ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Creating...
+                                        {isEditMode ? "Updating..." : "Creating..."}
                                     </>
                                 ) : (
-                                    "Create Appointment"
+                                    isEditMode ? "Update Appointment" : "Create Appointment"
                                 )}
                             </Button>
                             <Link href="/appointments">
