@@ -51,7 +51,6 @@ export async function apiRequest(
 
   // Build full URL with base URL
   const fullUrl = buildApiUrl(url);
-  console.log("Full URL:", fullUrl);
   const res = await fetch(fullUrl, fetchOptions);
 
   await throwIfResNotOk(res);
@@ -61,8 +60,9 @@ export async function apiRequest(
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
+  showToastOnError?: boolean;
 }) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
+  ({ on401: unauthorizedBehavior, showToastOnError = true }) =>
   async ({ queryKey }) => {
     const headers: HeadersInit = {};
 
@@ -76,30 +76,42 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${globalAuthToken}`;
     }
 
-    const res = await fetch(fullUrl, {
-      credentials: "include",
-      headers,
-    });
+    try {
+      const res = await fetch(fullUrl, {
+        credentials: "include",
+        headers,
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      // For table queries, throw error to be handled by useQuery with error boundary
+      if (showToastOnError) {
+        // Store error for toast display
+        console.error('API Error:', error);
+      }
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn({ on401: "throw", showToastOnError: true }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
+      // Don't throw errors for failed queries - handle them in components
+      throwOnError: false,
     },
     mutations: {
       retry: false,
+      throwOnError: false,
     },
   },
 });

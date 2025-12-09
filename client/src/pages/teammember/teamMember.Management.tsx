@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useTableQuery } from "@/hooks/useTableQuery";
 import {
   Table,
   TableBody,
@@ -82,14 +83,12 @@ const TeamMemberList: React.FC = () => {
     data: teamMembersResponse,
     isLoading,
     isError,
-    error,
-  } = useQuery<TeamMembersResponse, Error>({
+  } = useTableQuery<TeamMembersResponse>({
     queryKey: ["teammembers", page, pageSize, searchTerm],
     queryFn: ({ queryKey }) => fetchTeamMembers({ queryKey }),
     enabled: !!token,
-    placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  } as const);
+    errorMessage: "Failed to load team members data",
+  });
   console.log(teamMembersResponse, "teamMembersResponse");
   const handlePreviousPage = () => {
     if (page > 1) {
@@ -100,7 +99,7 @@ const TeamMemberList: React.FC = () => {
   const handleNextPage = () => {
     if (
       teamMembersResponse &&
-      page < teamMembersResponse.pagination.totalPages
+      page < (teamMembersResponse.pagination?.totalPages || 1)
     ) {
       setPage((p) => p + 1);
     }
@@ -114,15 +113,95 @@ const TeamMemberList: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (isError || !teamMembersResponse?.teamMembers) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-red-500 bg-white p-8 rounded-xl shadow-lg">
-          Error: {error?.message}
+      <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
+        <div className="max-w-7xl w-full mx-auto">
+          {/* Header Section */}
+          <div className="flex items-center gap-3 justify-center mb-4">
+            <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-xl font-bold text-gray-900">AIWO</span>
+              <span className="text-xl text-gray-600"> Healthcation</span>
+            </div>
+          </div>
+          <div className="text-left mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Team Members Directory
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Manage and view all registered team members
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            {/* Controls Header */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search team members..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
+                  className="pl-10 border-gray-300 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
+              <Link href="/teammembers/add">
+                <Button className="bg-teal-500 hover:bg-teal-600 text-white shadow-md hover:shadow-lg transition-all">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add New Team Member
+                </Button>
+              </Link>
+            </div>
+
+            {/* Table with No Data Message */}
+            <div className="rounded-lg border border-gray-200 overflow-hidden">
+              <Table>
+                <TableHeader className="bg-gray-50">
+                  <TableRow>
+                    <TableHead className="font-semibold text-gray-700">Serial No</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Profile</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Name</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Email</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Contact</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Gender</TableHead>
+                    <TableHead className="font-semibold text-gray-700">DOB</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Address</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-12">
+                      <div className="text-gray-500">
+                        <div className="text-lg font-medium mb-2">No data found</div>
+                        <div className="text-sm text-gray-400">Unable to load team members information</div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
+
+  const teamMembers = teamMembersResponse?.teamMembers || [];
+  const pagination = teamMembersResponse?.pagination || { totalPages: 1, total: 0, page: 1, limit: 10 };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
@@ -175,7 +254,7 @@ const TeamMemberList: React.FC = () => {
             </Link>
           </div>
 
-          {!teamMembersResponse?.teamMembers?.length ? (
+          {!teamMembers.length ? (
             <div className="text-center py-12 text-muted-foreground">
               No team members found
             </div>
@@ -218,7 +297,7 @@ const TeamMemberList: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {teamMembersResponse.teamMembers.map((member) => (
+                    {teamMembers.map((member: TeamMember) => (
                       <TableRow
                         key={member.id}
                         className="hover:bg-gray-50/50 transition-colors"
@@ -305,12 +384,12 @@ const TeamMemberList: React.FC = () => {
                   <span className="font-medium text-gray-900">
                     {Math.min(
                       page * pageSize,
-                      teamMembersResponse?.pagination.total || 0
+                      pagination.total || 0
                     )}
                   </span>{" "}
                   of{" "}
                   <span className="font-medium text-gray-900">
-                    {teamMembersResponse?.pagination.total || 0}
+                    {pagination.total || 0}
                   </span>{" "}
                   team members
                 </div>
@@ -325,17 +404,13 @@ const TeamMemberList: React.FC = () => {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm font-medium text-gray-700">
-                    Page {page} of{" "}
-                    {teamMembersResponse?.pagination.totalPages || 1}
+                    Page {page} of {pagination.totalPages || 1}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
-                    disabled={
-                      !teamMembersResponse ||
-                      page >= teamMembersResponse.pagination.totalPages
-                    }
+                    disabled={page >= pagination.totalPages}
                     className="hover:bg-gray-50 hover:text-teal-600"
                   >
                     <ChevronRight className="h-4 w-4" />

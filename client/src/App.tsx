@@ -46,6 +46,8 @@ import AppointmentList from "./pages/Appointment/AppointmentList";
 import AddAppointment from "./pages/Appointment/AddAppointment";
 import PackagesList from "./pages/Packages/PackagesList";
 import AddPackage from "./pages/Packages/AddPackage";
+import BillingsList from "./pages/Billings/BillingsList";
+import AddBillingForm from "./pages/Billings/AddBillingForm";
 function AuthenticatedLayout() {
   const { user } = useAuth();
 
@@ -96,6 +98,8 @@ function AuthenticatedLayout() {
               <Route path="/teammembers/add" component={TeamMemberForm} />
               <Route path="/teammembers/edit/:id" component={TeamMemberForm} />
               <Route path="/teammembers/view/:id" component={TeamMemberView} />
+              <Route path="/billings" component={BillingsList} />
+              <Route path="/billings/add" component={AddBillingForm} />
               {/* <Route path="/doctors">
                 {() => (
                   <ErrorBoundary>
