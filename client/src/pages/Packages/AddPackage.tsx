@@ -23,7 +23,8 @@ const packageSchema = z.object({
   name: z.string().min(2, "Name is required"),
   price: z.coerce.number().min(0, "Price must be a positive number"),
   description: z.string().optional(),
-  type: z.string().min(1, "Type is required"),
+  discount: z.coerce.number().min(0, "Discount must be a positive number").default(0),
+  discount_value: z.string().optional(), // Auto-calculated
 });
 
 type PackageFormData = z.infer<typeof packageSchema>;
@@ -51,7 +52,8 @@ const AddPackage = () => {
       name: "",
       price: 0,
       description: "",
-      type: "",
+      discount: 0,
+      discount_value: "",
     },
   });
 
@@ -78,7 +80,8 @@ const AddPackage = () => {
         setValue("name", packageData.name);
         setValue("price", packageData.price);
         setValue("description", packageData.description);
-        setValue("type", String(packageData.type));
+        setValue("discount", packageData.discount || 0);
+        setValue("discount_value", packageData.discount_value || "");
 
         toast({
           title: "Data loaded",
@@ -98,6 +101,19 @@ const AddPackage = () => {
 
     fetchPackageData();
   }, [isEditMode, packageId, setValue]);
+
+  // Auto-calculate discount_value when price or discount changes
+  const priceValue = watch("price");
+  const discountValue = watch("discount");
+
+  useEffect(() => {
+    if (priceValue && discountValue) {
+      const calculatedDiscountValue = (priceValue * discountValue) / 100;
+      setValue("discount_value", calculatedDiscountValue.toString());
+    } else {
+      setValue("discount_value", "0");
+    }
+  }, [priceValue, discountValue, setValue]);
 
   const onSubmit = async (data: PackageFormData) => {
     try {
@@ -196,7 +212,7 @@ const AddPackage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="type" className="text-gray-700">
                     Type *
                   </Label>
@@ -218,7 +234,7 @@ const AddPackage = () => {
                       {errors.type.message}
                     </p>
                   )}
-                </div>
+                </div> */}
 
                 <div className="space-y-2">
                   <Label htmlFor="price" className="text-gray-700">
@@ -234,6 +250,23 @@ const AddPackage = () => {
                   {errors.price && (
                     <p className="text-sm text-red-500">
                       {errors.price.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="discount" className="text-gray-700">
+                    Discount (%) *
+                  </Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    {...register("discount")}
+                    placeholder="Enter discount percentage"
+                    className="border-gray-300 focus:ring-teal-500 focus:border-transparent"
+                  />
+                  {errors.discount && (
+                    <p className="text-sm text-red-500">
+                      {errors.discount.message}
                     </p>
                   )}
                 </div>
