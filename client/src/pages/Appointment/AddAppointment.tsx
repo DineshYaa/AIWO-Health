@@ -66,7 +66,7 @@ interface Slot {
 
 interface Weekday {
     id: string;
-    name: string;
+    day: string;
 }
 
 const AddAppointment: React.FC = () => {
@@ -205,7 +205,7 @@ const AddAppointment: React.FC = () => {
             const payload = {
                 patient_id: data.patient_id,
                 doctor_id: data.doctor_id,
-                slot_id: hasSlots ? data.slot_id : "",
+                slot_id: data.slot_id || "",
                 date: data.date,
                 reason: data.reason,
                 symptom: data.symptom,
@@ -213,10 +213,10 @@ const AddAppointment: React.FC = () => {
                 service_fees: parseFloat(data.service_fees),
                 remarks: data.remarks || "",
                 reshedule: parseInt(data.reshedule || "1"),
-                week_day_id: hasSlots ? "" : data.week_day_id || "",
-                week_day: hasSlots ? "" : data.week_day || "",
-                start_time: hasSlots ? "" : data.start_time || "",
-                end_time: hasSlots ? "" : data.end_time || "",
+                week_day_id: data.week_day_id || "",
+                week_day: data.week_day || "",
+                start_time: data.start_time || "",
+                end_time: data.end_time || "",
             };
 
             const response = await apiRequest(
@@ -370,7 +370,7 @@ const AddAppointment: React.FC = () => {
                         </div>
 
                         {/* Conditional Slot Selection or Manual Time Entry */}
-                        {selectedDoctorId && selectedDate && (
+                        {selectedDoctorId && (
                             <>
                                 {hasSlots ? (
                                     <div>
@@ -403,7 +403,7 @@ const AddAppointment: React.FC = () => {
                                     <>
                                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                                             <p className="text-sm text-yellow-800">
-                                                No slots available for this doctor on the selected date. Please enter the
+                                                No slots available for this doctor. Please enter the
                                                 appointment time manually.
                                             </p>
                                         </div>
@@ -419,7 +419,7 @@ const AddAppointment: React.FC = () => {
                                                     const weekday = weekdaysData?.find(
                                                         (w: Weekday) => w.id === value
                                                     );
-                                                    if (weekday) setValue("week_day", weekday.name);
+                                                    if (weekday) setValue("week_day", weekday.day);
                                                 }}
                                                 disabled={loadingWeekdays}
                                             >
@@ -429,7 +429,7 @@ const AddAppointment: React.FC = () => {
                                                 <SelectContent>
                                                     {weekdaysData?.map((weekday: Weekday) => (
                                                         <SelectItem key={weekday.id} value={weekday.id}>
-                                                            {weekday.name}
+                                                            {weekday.day}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
