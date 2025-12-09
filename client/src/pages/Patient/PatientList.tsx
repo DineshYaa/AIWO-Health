@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useTableQuery } from "@/hooks/useTableQuery";
 import {
   Table,
   TableBody,
@@ -73,13 +74,12 @@ const PatientList: React.FC = () => {
     data: patientsResponse,
     isLoading,
     isError,
-    error,
-  } = useQuery<PatientsResponse, Error>({
+  } = useTableQuery<PatientsResponse>({
     queryKey: ["patients", page, pageSize, searchTerm],
     queryFn: ({ queryKey }) => fetchPatients({ queryKey }),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  } as const);
+    errorMessage: "Failed to load patients data",
+  });
 
   const handlePreviousPage = () => {
     if (page > 1) {
@@ -88,7 +88,7 @@ const PatientList: React.FC = () => {
   };
 
   const handleNextPage = () => {
-    if (patientsResponse && page < patientsResponse?.totalPages) {
+    if (patientsResponse && page < (patientsResponse?.totalPages || 1)) {
       setPage((p) => p + 1);
     }
   };
@@ -115,12 +115,12 @@ const PatientList: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (isError || !patientsResponse?.data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error?.message}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+        <div className="text-gray-500 bg-white p-8 rounded-xl shadow-lg text-center">
+          <div className="text-lg font-medium mb-2">No data found</div>
+          <div className="text-sm text-gray-400">Unable to load patients information</div>
         </div>
       </div>
     );
@@ -214,7 +214,7 @@ const PatientList: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {patients.map((patient) => (
+                    {patients.map((patient: Patient) => (
                       <TableRow
                         key={patient.id}
                         className="hover:bg-gray-50/50 transition-colors"

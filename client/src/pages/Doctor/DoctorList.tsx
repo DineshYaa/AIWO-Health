@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useTableQuery } from "@/hooks/useTableQuery";
 import {
   Table,
   TableBody,
@@ -80,13 +81,11 @@ const DoctorList: React.FC = () => {
     data: doctorsResponse,
     isLoading,
     isError,
-    error,
-  } = useQuery<DoctorsResponse, Error>({
+  } = useTableQuery<DoctorsResponse>({
     queryKey: ["doctors", page, pageSize, searchTerm],
     queryFn: ({ queryKey }) => fetchDoctors({ queryKey }),
     enabled: !!token,
-    placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    errorMessage: "Failed to load doctors data",
   });
 
   const handlePreviousPage = () => {
@@ -96,7 +95,7 @@ const DoctorList: React.FC = () => {
   };
 
   const handleNextPage = () => {
-    if (doctorsResponse && page < doctorsResponse?.totalPages) {
+    if (doctorsResponse && page < (doctorsResponse?.totalPages || 1)) {
       setPage((p) => p + 1);
     }
   };
@@ -109,35 +108,25 @@ const DoctorList: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (isError || !doctorsResponse?.data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-red-500 bg-white p-8 rounded-xl shadow-lg">
-          Error: {error?.message}
+        <div className="text-gray-500 bg-white p-8 rounded-xl shadow-lg text-center">
+          <div className="text-lg font-medium mb-2">No data found</div>
+          <div className="text-sm text-gray-400">Unable to load doctors information</div>
         </div>
       </div>
     );
   }
 
+  const doctors = doctorsResponse?.data || [];
+  const totalPages = doctorsResponse?.totalPages || 1;
+  const totalRecords = doctorsResponse?.totalRecords || 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
       <div className="max-w-7xl w-full mx-auto">
         {/* Header Section */}
-        {/* <div className="flex items-center gap-3 justify-center mb-4">
-          <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-xl font-bold text-gray-900">AIWO</span>
-            <span className="text-xl text-gray-600"> Healthcation</span>
-          </div>
-        </div> */}
         <div className="text-left mb-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Doctors Directory
@@ -172,7 +161,7 @@ const DoctorList: React.FC = () => {
             )}
           </div>
 
-          {!doctorsResponse?.data?.length ? (
+          {!doctors.length ? (
             <div className="text-center py-12 text-muted-foreground">
               No doctors found
             </div>
@@ -209,13 +198,13 @@ const DoctorList: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doctorsResponse.data.map((doctor: any) => (
+                    {doctors.map((doctor: Doctor) => (
                       <TableRow
                         key={doctor.id}
                         className="hover:bg-gray-50/50 transition-colors"
                       >
                         <TableCell className="font-medium text-gray-900">
-                          {`${doctor.first_name} ${doctor.last_name}`}
+                          {doctor.first_name} {doctor.last_name}
                         </TableCell>
                         <TableCell className="text-gray-600">
                           {doctor.email}
@@ -283,14 +272,11 @@ const DoctorList: React.FC = () => {
                   </span>{" "}
                   to{" "}
                   <span className="font-medium text-gray-900">
-                    {Math.min(
-                      page * pageSize,
-                      doctorsResponse?.totalRecords || 0
-                    )}
+                    {Math.min(page * pageSize, totalRecords)}
                   </span>{" "}
                   of{" "}
                   <span className="font-medium text-gray-900">
-                    {doctorsResponse?.totalRecords || 0}
+                    {totalRecords}
                   </span>{" "}
                   doctors
                 </div>
@@ -305,15 +291,13 @@ const DoctorList: React.FC = () => {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm font-medium text-gray-700">
-                    Page {page} of {doctorsResponse?.totalPages || 1}
+                    Page {page} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
-                    disabled={
-                      !doctorsResponse || page >= doctorsResponse.totalPages
-                    }
+                    disabled={page >= totalPages}
                     className="hover:bg-gray-50 hover:text-teal-600"
                   >
                     <ChevronRight className="h-4 w-4" />

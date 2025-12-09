@@ -116,6 +116,11 @@ const baseNavItems = [
     url: "/packages",
     icon: Package,
   },
+  {
+    title: "Billings",
+    url: "/billings",
+    icon: Package,
+  },
 ];
 
 const physicianNavItem = {

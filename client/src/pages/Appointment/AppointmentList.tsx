@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useTableQuery } from "@/hooks/useTableQuery";
 import {
     Table,
     TableBody,
@@ -81,13 +82,11 @@ const AppointmentList: React.FC = () => {
         data: appointmentsResponse,
         isLoading,
         isError,
-        error,
-    } = useQuery<AppointmentsResponse, Error>({
+    } = useTableQuery<AppointmentsResponse>({
         queryKey: ["appointments", page, pageSize],
         queryFn: ({ queryKey }) => fetchAppointments({ queryKey }),
         enabled: !!token,
-        placeholderData: keepPreviousData,
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        errorMessage: "Failed to load appointments data",
     });
 
     const handlePreviousPage = () => {
@@ -97,7 +96,7 @@ const AppointmentList: React.FC = () => {
     };
 
     const handleNextPage = () => {
-        if (appointmentsResponse && page < appointmentsResponse?.totalPages) {
+        if (appointmentsResponse && page < (appointmentsResponse?.totalPages || 1)) {
             setPage((p) => p + 1);
         }
     };
@@ -129,15 +128,20 @@ const AppointmentList: React.FC = () => {
         );
     }
 
-    if (isError) {
+    if (isError || !appointmentsResponse?.data) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-red-500 bg-white p-8 rounded-xl shadow-lg">
-                    Error: {error?.message}
+                <div className="text-gray-500 bg-white p-8 rounded-xl shadow-lg text-center">
+                    <div className="text-lg font-medium mb-2">No data found</div>
+                    <div className="text-sm text-gray-400">Unable to load appointments information</div>
                 </div>
             </div>
         );
     }
+
+    const appointments = appointmentsResponse?.data || [];
+    const totalPages = appointmentsResponse?.totalPages || 1;
+    const totalRecords = appointmentsResponse?.totalRecords || 0;
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50 px-6 py-12">
